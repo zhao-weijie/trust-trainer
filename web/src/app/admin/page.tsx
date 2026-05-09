@@ -14,6 +14,7 @@ import {
   StatusBadge
 } from "@/components";
 import { api } from "@/lib/convexApi";
+import { buildDrillImageRequest, type GenerateDrillImageResponse } from "@/lib/falDrillImage";
 import { normalizeList } from "@/lib/safety";
 import type { AnswerChoice, DemoState, ReviewQueueItem, RiskLevel, ScamStatus, ScopeStatus } from "@/lib/types";
 
@@ -35,6 +36,8 @@ type DraftForm = {
   correct_answer: AnswerChoice["id"];
 };
 
+type ApprovalPhase = "idle" | "saving" | "generating" | "approving";
+
 function formFromItem(item: ReviewQueueItem): DraftForm {
   return {
     scenario: item.scenario,
@@ -49,6 +52,13 @@ function formFromItem(item: ReviewQueueItem): DraftForm {
     answer_choices: item.answer_choices,
     correct_answer: item.correct_answer
   };
+}
+
+function approvalButtonLabel(phase: ApprovalPhase): string {
+  if (phase === "saving") return "Saving...";
+  if (phase === "generating") return "Generating screenshot...";
+  if (phase === "approving") return "Approving...";
+  return "Approve & publish";
 }
 
 function validateDraft(form: DraftForm): string[] {
@@ -166,10 +176,16 @@ function DraftEditor({
   const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [approvalPhase, setApprovalPhase] = useState<ApprovalPhase>("idle");
   const [falConfigured, setFalConfigured] = useState<boolean | null>(null);
+  const [localGeneratedAsset, setLocalGeneratedAsset] = useState<{ url: string; requestId: string } | null>(null);
   const [publishedId, setPublishedId] = useState("");
   const validationErrors = validateDraft(form);
   const blocksPublish = form.scope_status === "out_of_scope_spam" || form.scope_status === "reject" || validationErrors.length > 0;
+  const isApprovalBusy = approvalPhase !== "idle";
+  const isBusy = isSaving || isGeneratingImage || isApprovalBusy;
+  const generatedAssetUrl = item.generated_asset_url || localGeneratedAsset?.url;
+  const generatedAssetRequestId = item.generated_asset_request_id || localGeneratedAsset?.requestId;
 
   useEffect(() => {
     let cancelled = false;
@@ -187,15 +203,21 @@ function DraftEditor({
     };
   }, []);
 
-  async function save(): Promise<boolean> {
-    setError("");
-    setNotice("");
+  async function save({
+    clearMessages = true,
+    setBusy = true,
+    showNotice = true
+  }: { clearMessages?: boolean; setBusy?: boolean; showNotice?: boolean } = {}): Promise<boolean> {
+    if (clearMessages) {
+      setError("");
+      setNotice("");
+    }
     const errors = validateDraft(form);
     if (errors.length > 0) {
       setError(errors.join(" "));
       return false;
     }
-    setIsSaving(true);
+    if (setBusy) setIsSaving(true);
     try {
       await updateDraft({
         draft_id: item.draft_id,
@@ -211,14 +233,34 @@ function DraftEditor({
         answer_choices: form.answer_choices.map((choice) => ({ ...choice, text: choice.text.trim() })),
         correct_answer: form.correct_answer
       });
-      setNotice("Draft saved.");
+      if (showNotice) setNotice("Draft saved.");
       return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not save this draft.");
       return false;
     } finally {
-      setIsSaving(false);
+      if (setBusy) setIsSaving(false);
     }
+  }
+
+  async function generateAndAttachFalImage(): Promise<GenerateDrillImageResponse> {
+    const response = await fetch("/api/fal/generate-drill-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildDrillImageRequest(item, form))
+    });
+    const payload = (await response.json()) as GenerateDrillImageResponse;
+    if (!response.ok || !payload.imageUrl || !payload.requestId || !payload.prompt) {
+      throw new Error(payload.error || "fal image generation failed.");
+    }
+    await attachGeneratedAsset({
+      draft_id: item.draft_id,
+      generated_asset_url: payload.imageUrl,
+      generated_asset_request_id: payload.requestId,
+      generated_asset_prompt: payload.prompt
+    });
+    setLocalGeneratedAsset({ url: payload.imageUrl, requestId: payload.requestId });
+    return payload;
   }
 
   async function approve() {
@@ -226,51 +268,45 @@ function DraftEditor({
       setError(validationErrors.join(" ") || "Out-of-scope or rejected drafts cannot be published.");
       return;
     }
-    const saved = await save();
-    if (!saved) return;
-    setIsSaving(true);
+    setError("");
+    setNotice("");
+    setApprovalPhase("saving");
+    const saved = await save({ clearMessages: false, setBusy: false, showNotice: false });
+    if (!saved) {
+      setApprovalPhase("idle");
+      return;
+    }
     try {
+      if (!generatedAssetUrl) {
+        if (falConfigured === false) {
+          throw new Error("Could not generate screenshot, so the draft was not published. Use manual generation or configure FAL_KEY.");
+        }
+        setApprovalPhase("generating");
+        try {
+          await generateAndAttachFalImage();
+        } catch (caught) {
+          const detail = caught instanceof Error ? ` ${caught.message}` : "";
+          throw new Error(`Could not generate screenshot, so the draft was not published. Use manual generation or configure FAL_KEY.${detail}`);
+        }
+      }
+      setApprovalPhase("approving");
       await approveDraft({ draft_id: item.draft_id });
       setPublishedId(`approved-${item.draft_id}`);
       setNotice("Draft approved and published.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not approve this draft.");
     } finally {
-      setIsSaving(false);
+      setApprovalPhase("idle");
     }
   }
 
   async function generateFalImage() {
-    if (!falConfigured || isGeneratingImage) return;
+    if (!falConfigured || isGeneratingImage || isApprovalBusy) return;
     setError("");
     setNotice("");
     setIsGeneratingImage(true);
     try {
-      const response = await fetch("/api/fal/generate-drill-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scenario: form.scenario,
-          threat_type: form.threat_type,
-          safest_action: form.safest_action,
-          red_flags: normalizeList(form.red_flags)
-        })
-      });
-      const payload = (await response.json()) as {
-        imageUrl?: string;
-        requestId?: string;
-        prompt?: string;
-        error?: string;
-      };
-      if (!response.ok || !payload.imageUrl || !payload.requestId || !payload.prompt) {
-        throw new Error(payload.error || "fal image generation failed.");
-      }
-      await attachGeneratedAsset({
-        draft_id: item.draft_id,
-        generated_asset_url: payload.imageUrl,
-        generated_asset_request_id: payload.requestId,
-        generated_asset_prompt: payload.prompt
-      });
+      await generateAndAttachFalImage();
       setNotice("fal edited the seed image and attached it to this draft.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not generate fal image.");
@@ -288,12 +324,12 @@ function DraftEditor({
         safestAction={item.safest_action}
       >
         <p className="artifact-inline">{item.defanged_text}</p>
-        {item.generated_asset_url && (
+        {generatedAssetUrl && (
           <figure className="generated-asset">
-            <img src={item.generated_asset_url} alt="fal-generated synthetic scam interaction artifact" />
+            <img src={generatedAssetUrl} alt="fal-generated synthetic scam interaction artifact" />
             <figcaption>
               fal.ai synthetic drill image
-              {item.generated_asset_request_id ? ` · ${item.generated_asset_request_id}` : ""}
+              {generatedAssetRequestId ? ` · ${generatedAssetRequestId}` : ""}
             </figcaption>
           </figure>
         )}
@@ -303,15 +339,15 @@ function DraftEditor({
         <p className="muted">Edit the seed chat screenshot into a safe synthetic drill artifact. It remains unplayable until admin approval.</p>
         <div className="action-row">
           <Button
-            disabled={!falConfigured || isGeneratingImage || blocksPublish}
+            disabled={!falConfigured || isGeneratingImage || isApprovalBusy || blocksPublish}
             onClick={() => void generateFalImage()}
             variant="secondary"
           >
             {isGeneratingImage ? <WandSparkles size={15} /> : <ImagePlus size={15} />}
             {falConfigured === false ? "fal not configured" : isGeneratingImage ? "Editing..." : "Generate fal edit"}
           </Button>
-          {item.generated_asset_url && (
-            <a className="button button--ghost button--md" href={item.generated_asset_url} rel="noreferrer" target="_blank">
+          {generatedAssetUrl && (
+            <a className="button button--ghost button--md" href={generatedAssetUrl} rel="noreferrer" target="_blank">
               Open image <ExternalLink size={15} />
             </a>
           )}
@@ -401,20 +437,20 @@ function DraftEditor({
       </Panel>
 
       <div className="action-row">
-        <Button onClick={() => void approve()} disabled={blocksPublish || isSaving}>
-          <Check size={15} /> Approve & publish
+        <Button onClick={() => void approve()} disabled={blocksPublish || isBusy}>
+          <Check size={15} /> {approvalButtonLabel(approvalPhase)}
         </Button>
-        <Button onClick={() => void save()} disabled={validationErrors.length > 0 || isSaving} variant="secondary">
+        <Button onClick={() => void save()} disabled={validationErrors.length > 0 || isBusy} variant="secondary">
           <Save size={15} /> {isSaving ? "Saving..." : "Save"}
         </Button>
         <Button
           onClick={() => void markOutOfScope({ draft_id: item.draft_id, reason: "Admin marked outside phishing/scam scope." })}
-          disabled={isSaving}
+          disabled={isBusy}
           variant="ghost"
         >
           <ShieldX size={15} /> Out of scope
         </Button>
-        <Button onClick={() => void rejectDraft({ draft_id: item.draft_id, reason: "Admin rejected draft." })} disabled={isSaving} variant="danger">
+        <Button onClick={() => void rejectDraft({ draft_id: item.draft_id, reason: "Admin rejected draft." })} disabled={isBusy} variant="danger">
           <X size={15} /> Reject
         </Button>
         <Link className="button button--ghost button--md" href="/dashboard">

@@ -2,16 +2,9 @@ import { fal } from "@fal-ai/client";
 import { readFile } from "fs/promises";
 import { NextResponse } from "next/server";
 import path from "path";
+import type { GenerateDrillImageRequest } from "@/lib/falDrillImage";
 
 export const runtime = "nodejs";
-
-type GenerateImageRequest = {
-  scenario?: string;
-  threat_type?: string;
-  safest_action?: string;
-  red_flags?: string[];
-  seed_image_url?: string;
-};
 
 const localSeedImagePath = path.join(process.cwd(), "public", "fal-seeds", "messenger-scam-template.png");
 
@@ -24,18 +17,25 @@ function seedFromText(value: string): number {
   return Math.abs(hash);
 }
 
-function buildFalEditPrompt(body: GenerateImageRequest): string {
+function compactPromptText(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function buildFalEditPrompt(body: Partial<GenerateDrillImageRequest>): string {
   const redFlags = body.red_flags?.filter(Boolean).slice(0, 3).join(", ") || "urgent pressure, unsafe link";
-  const scenario = body.scenario?.trim() || "A suspicious delivery-fee scam message";
-  const safestAction = body.safest_action?.trim() || "Open the official app or website directly.";
+  const scenario = compactPromptText(body.scenario ?? "") || "A suspicious delivery-fee scam message";
+  const safestAction = compactPromptText(body.safest_action ?? "") || "Open the official app or website directly.";
+  const submittedScamText = compactPromptText(body.defanged_text ?? "") || "A defanged suspicious message submitted for review.";
 
   return [
     "Edit the seed image into a realistic but clearly synthetic scam-literacy training screenshot.",
     "Preserve the seed image's phone screenshot composition, chat-message spacing, status bar, and messaging-app feel.",
-    "Replace the visible account name, profile details, and message copy so they match the scenario below.",
-    "Use fictional institutions and placeholder names only. Do not use real brands, real agencies, real phone numbers, QR codes, or clickable URLs.",
+    "Replace the visible account name, profile details, and message copy so they match the submitted scam text below.",
+    "Use fictional logos, fictional institutions, and placeholder names only. Do not use real brands, real agencies, real IDs, real phone numbers, QR codes, or clickable URLs.",
     "If any URL appears, it must be defanged and fictional, for example hxxps://example[.]test.",
+    "Do not reconstruct defanged URLs into live URLs.",
     "Keep the artifact plausible enough for education, but avoid making it operationally useful for fraud.",
+    `Submitted scam text: "${submittedScamText}"`,
     `Scenario: ${scenario}`,
     `Threat type: ${body.threat_type || "phishing_or_scam"}.`,
     `Red flags to make visible or implied: ${redFlags}.`,
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = (await request.json()) as GenerateImageRequest;
+    const body = (await request.json()) as Partial<GenerateDrillImageRequest>;
     const prompt = buildFalEditPrompt(body);
     fal.config({ credentials: process.env.FAL_KEY });
     const seedImageUrl = body.seed_image_url?.trim() || (await defaultSeedImageUrl());
