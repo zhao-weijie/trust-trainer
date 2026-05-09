@@ -3,6 +3,7 @@
 Source of truth: [hackathon-brief.md](hackathon-brief.md).
 Product stories: [STORIES.yaml](STORIES.yaml).
 Design system: [.planning/DESIGN.md](.planning/DESIGN.md).
+Public demo: [https://web-one-rho-kt48p1kwl2.vercel.app](https://web-one-rho-kt48p1kwl2.vercel.app).
 
 ## Product Loop
 
@@ -221,14 +222,14 @@ SubmitPage
   raw text
   -> sanitizeSubmission()
   -> heuristicCheck() or model adapter
-  -> ReviewQueueItem in local demo store
+  -> Convex submissions, scamChecks, and drillDrafts
 
 AdminPage
-  ReviewQueueItem
+  Convex ReviewQueueItem projection
   -> admin edits labels, scenario, choices, explanation
   -> approve / reject / out_of_scope
 
-approveSubmission()
+approveDraft()
   approved ReviewQueueItem
   -> ApprovedDrill
   -> DatasetRow
@@ -303,20 +304,31 @@ Do not keep large raw public datasets in the repo. Import scripts may read local
 web/src/lib/types.ts       # canonical TypeScript contracts
 web/src/lib/seeds.ts       # deterministic normalized seed examples
 web/src/lib/safety.ts      # demo redaction, URL defanging, heuristic labels
-web/src/lib/demoStore.ts   # localStorage demo persistence and lifecycle transforms
+web/convex/schema.ts       # Convex tables for submissions, checks, drafts, drills, attempts, dataset rows
+web/convex/domain.ts       # Convex queries/mutations for the full demo lifecycle
 web/src/app/submit         # instant check
 web/src/app/admin          # human review and publish
 web/src/app/challenge/[id] # playable drill
 web/src/app/dashboard      # skill and dataset loop
 ```
 
-The current app intentionally uses localStorage and deterministic heuristics. Add live APIs only behind adapters that return the same contracts.
+The current app uses Convex shared state and deterministic heuristics. Add live AI APIs only behind adapters that return the same contracts. The public Vercel route is:
+
+```text
+https://web-one-rho-kt48p1kwl2.vercel.app
+```
+
+Convex dev deployment:
+
+```text
+NEXT_PUBLIC_CONVEX_URL=https://fleet-curlew-675.convex.cloud
+```
 
 ## Build Priorities
 
 1. Keep the visible demo path smooth: submit -> result -> admin -> approve -> challenge -> dashboard.
 2. Keep contracts strict and small.
-3. Add Convex persistence only after the local contract flow is stable.
+3. Keep Convex persistence contract-compatible with `web/src/lib/types.ts`.
 4. Add OpenAI, Exa, fal.ai, Gemini, or Adaption only when their output is visible in the same review loop.
 5. Record a fallback demo using deterministic seed data.
 
