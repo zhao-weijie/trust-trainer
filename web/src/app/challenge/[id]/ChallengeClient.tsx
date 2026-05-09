@@ -13,12 +13,18 @@ export function ChallengeClient({ id }: { id: string }) {
   const recordAttempt = useMutation(api.domain.recordAttempt);
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [selected, setSelected] = useState<AnswerChoice["id"] | null>(null);
+  const [error, setError] = useState("");
 
   async function answer(choiceId: string) {
     if (!drill || attempt) return;
     setSelected(choiceId as AnswerChoice["id"]);
-    const nextAttempt = (await recordAttempt({ drill_id: drill.id, selected_answer: choiceId as AnswerChoice["id"] })) as Attempt;
-    setAttempt(nextAttempt);
+    setError("");
+    try {
+      const nextAttempt = (await recordAttempt({ drill_id: drill.id, selected_answer: choiceId as AnswerChoice["id"] })) as Attempt;
+      setAttempt(nextAttempt);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not record this attempt.");
+    }
   }
 
   if (drill === undefined) {
@@ -41,7 +47,7 @@ export function ChallengeClient({ id }: { id: string }) {
   return (
     <div className="workflow-shell">
       <BaseContentLayer
-        title="What should you do next?"
+        title="Safety drill"
         kicker="Family safety drill"
         meta={
           <>
@@ -50,13 +56,25 @@ export function ChallengeClient({ id }: { id: string }) {
           </>
         }
       >
-        <div className="artifact-preview">
+        <div className="challenge-artifact">
           <div className="artifact-preview__meta">{drill.content_type} scenario</div>
-          <p>{drill.scenario}</p>
+          <p className="challenge-artifact__scenario">{drill.scenario}</p>
+          {attempt && (
+            <div className="challenge-artifact__result">
+              <StatusBadge tone={attempt.is_correct ? "success" : "danger"}>
+                {attempt.is_correct ? "Correct action" : "Risky choice"}
+              </StatusBadge>
+              <span>{drill.safest_action}</span>
+            </div>
+          )}
         </div>
       </BaseContentLayer>
 
       <AnalyticsPanel title="Choose the safest action" kicker="One tap answer">
+        <div className="drill-progress">
+          <span>Question</span>
+          <strong>01</strong>
+        </div>
         <DrillOptions
           correctId={drill.correct_answer}
           onSelect={(choiceId) => void answer(choiceId)}
@@ -74,6 +92,7 @@ export function ChallengeClient({ id }: { id: string }) {
           revealAnswer={Boolean(attempt)}
           selectedId={selected ?? undefined}
         />
+        {error && <p className="form-error">{error}</p>}
 
         {attempt ? (
           <ResultPanel

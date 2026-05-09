@@ -29,6 +29,8 @@
 ## Build Priorities
 
 - Prioritize the visible demo path over production completeness.
+- Treat the production build/deploy path as the only build path that matters for the hackathon demo.
+- Use `npm run build` as the required verification gate; do not spend time chasing dev-server-only issues unless they block editing.
 - Build admin review before public sharing.
 - Use deterministic seed data for demos.
 - Use fal.ai for safe synthetic multimodal artifacts instead of scraping random web images.

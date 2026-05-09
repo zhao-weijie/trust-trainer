@@ -327,10 +327,12 @@ NEXT_PUBLIC_CONVEX_URL=https://fleet-curlew-675.convex.cloud
 ## Build Priorities
 
 1. Keep the visible demo path smooth: submit -> result -> admin -> approve -> challenge -> dashboard.
-2. Keep contracts strict and small.
-3. Keep Convex persistence contract-compatible with `web/src/lib/types.ts`.
-4. Add OpenAI, Exa, fal.ai, Gemini, or Adaption only when their output is visible in the same review loop.
-5. Record a fallback demo using deterministic seed data.
+2. Optimize for one build path: `npm run build`, `npm run start`, and the Vercel production deployment.
+3. Do not burn time on dev-server-only behavior unless it blocks implementation; production build success is the demo gate.
+4. Keep contracts strict and small.
+5. Keep Convex persistence contract-compatible with `web/src/lib/types.ts`.
+6. Add OpenAI, Exa, fal.ai, Gemini, or Adaption only when their output is visible in the same review loop.
+7. Record a fallback demo using deterministic seed data.
 
 ## Cut List
 

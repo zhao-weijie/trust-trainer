@@ -51,6 +51,30 @@ function formFromItem(item: ReviewQueueItem): DraftForm {
   };
 }
 
+function validateDraft(form: DraftForm): string[] {
+  const errors: string[] = [];
+  const redFlags = normalizeList(form.red_flags);
+  const skillTags = normalizeList(form.skill_tags);
+  const isPublishableScope = form.scope_status !== "out_of_scope_spam" && form.scope_status !== "reject";
+
+  if (!form.scenario.trim()) errors.push("Scenario is required.");
+  if (!form.threat_type.trim()) errors.push("Threat type is required.");
+  if (!form.safest_action.trim()) errors.push("Safest action is required.");
+  if (!form.explanation.trim()) errors.push("Explanation is required.");
+  if (form.answer_choices.length !== 4) errors.push("A drill needs exactly four answer choices.");
+  if (form.answer_choices.some((choice) => !choice.text.trim())) errors.push("All answer choices need text.");
+  if (!form.answer_choices.some((choice) => choice.id === form.correct_answer)) errors.push("Correct answer must match one choice.");
+  if (isPublishableScope && form.scam_status !== "legitimate" && redFlags.length === 0) {
+    errors.push("In-scope scam drills need at least one red flag.");
+  }
+  if (isPublishableScope && skillTags.length === 0) errors.push("Publishable drills need at least one skill tag.");
+  if (form.scope_status === "out_of_scope_spam" && form.threat_type !== "generic_spam") {
+    errors.push("Out-of-scope spam should use threat type generic_spam.");
+  }
+
+  return errors;
+}
+
 export default function AdminPage() {
   const state = useQuery(api.domain.getDemoState) as DemoState | undefined;
   const seedDemo = useMutation(api.domain.seedDemo);
@@ -132,27 +156,62 @@ function DraftEditor({
   updateDraft: ReturnType<typeof useMutation>;
 }) {
   const [form, setForm] = useState<DraftForm>(() => formFromItem(item));
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const validationErrors = validateDraft(form);
+  const blocksPublish = form.scope_status === "out_of_scope_spam" || form.scope_status === "reject" || validationErrors.length > 0;
 
-  async function save() {
-    await updateDraft({
-      draft_id: item.draft_id,
-      scenario: form.scenario,
-      scam_status: form.scam_status,
-      scope_status: form.scope_status,
-      threat_type: form.threat_type,
-      risk_level: form.risk_level,
-      red_flags: normalizeList(form.red_flags),
-      safest_action: form.safest_action,
-      skill_tags: normalizeList(form.skill_tags),
-      explanation: form.explanation,
-      answer_choices: form.answer_choices,
-      correct_answer: form.correct_answer
-    });
+  async function save(): Promise<boolean> {
+    setError("");
+    setNotice("");
+    const errors = validateDraft(form);
+    if (errors.length > 0) {
+      setError(errors.join(" "));
+      return false;
+    }
+    setIsSaving(true);
+    try {
+      await updateDraft({
+        draft_id: item.draft_id,
+        scenario: form.scenario.trim(),
+        scam_status: form.scam_status,
+        scope_status: form.scope_status,
+        threat_type: form.threat_type.trim(),
+        risk_level: form.risk_level,
+        red_flags: normalizeList(form.red_flags),
+        safest_action: form.safest_action.trim(),
+        skill_tags: normalizeList(form.skill_tags),
+        explanation: form.explanation.trim(),
+        answer_choices: form.answer_choices.map((choice) => ({ ...choice, text: choice.text.trim() })),
+        correct_answer: form.correct_answer
+      });
+      setNotice("Draft saved.");
+      return true;
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not save this draft.");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function approve() {
-    await save();
-    await approveDraft({ draft_id: item.draft_id });
+    if (blocksPublish) {
+      setError(validationErrors.join(" ") || "Out-of-scope or rejected drafts cannot be published.");
+      return;
+    }
+    const saved = await save();
+    if (!saved) return;
+    setIsSaving(true);
+    try {
+      await approveDraft({ draft_id: item.draft_id });
+      setNotice("Draft approved and published.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not approve this draft.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -199,6 +258,11 @@ function DraftEditor({
           safestAction={form.safest_action}
           skillTags={normalizeList(form.skill_tags)}
         />
+        {validationErrors.length > 0 && (
+          <div className="validation-list" aria-label="Validation issues">
+            {validationErrors.map((message) => <span key={message}>{message}</span>)}
+          </div>
+        )}
       </Panel>
 
       <Panel title="Quiz draft" eyebrow="What should they do next?">
@@ -244,22 +308,28 @@ function DraftEditor({
       </Panel>
 
       <div className="action-row">
-        <Button onClick={() => void approve()} disabled={form.scope_status === "out_of_scope_spam" || form.scope_status === "reject"}>
+        <Button onClick={() => void approve()} disabled={blocksPublish || isSaving}>
           <Check size={15} /> Approve & publish
         </Button>
-        <Button onClick={() => void save()} variant="secondary">
-          <Save size={15} /> Save
+        <Button onClick={() => void save()} disabled={validationErrors.length > 0 || isSaving} variant="secondary">
+          <Save size={15} /> {isSaving ? "Saving..." : "Save"}
         </Button>
-        <Button onClick={() => void markOutOfScope({ draft_id: item.draft_id, reason: "Admin marked outside phishing/scam scope." })} variant="ghost">
+        <Button
+          onClick={() => void markOutOfScope({ draft_id: item.draft_id, reason: "Admin marked outside phishing/scam scope." })}
+          disabled={isSaving}
+          variant="ghost"
+        >
           <ShieldX size={15} /> Out of scope
         </Button>
-        <Button onClick={() => void rejectDraft({ draft_id: item.draft_id, reason: "Admin rejected draft." })} variant="danger">
+        <Button onClick={() => void rejectDraft({ draft_id: item.draft_id, reason: "Admin rejected draft." })} disabled={isSaving} variant="danger">
           <X size={15} /> Reject
         </Button>
         <Link className="button button--ghost button--md" href="/dashboard">
           Dashboard <ExternalLink size={15} />
         </Link>
       </div>
+      {error && <p className="form-error">{error}</p>}
+      {notice && <p className="form-notice">{notice}</p>}
     </>
   );
 }
