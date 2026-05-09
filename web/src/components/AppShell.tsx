@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, ClipboardCheck, GraduationCap, HelpCircle, ShieldCheck, Upload } from "lucide-react";
+import { BarChart3, GraduationCap, ShieldCheck, Upload } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -15,7 +15,6 @@ type NavItem = {
 
 const desktopNavItems: NavItem[] = [
   { href: "/submit", label: "Scam Check", icon: Upload },
-  { href: "/admin", label: "Review", icon: ClipboardCheck },
   { href: "/challenge/approved-draft-seed-government-grant", label: "Drill", icon: GraduationCap, activePrefix: "/challenge" },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 }
 ];
@@ -58,15 +57,7 @@ export function AppShell({ children }: AppShellProps) {
           })}
         </nav>
 
-        <div className="app-shell__status">
-          <Link className="app-shell__admin-link" href="/admin">
-            <ClipboardCheck size={14} aria-hidden="true" />
-            Admin review
-          </Link>
-          <button className="app-shell__help" type="button" aria-label="Help">
-            <HelpCircle size={18} aria-hidden="true" />
-          </button>
-        </div>
+        <div className="app-shell__status" aria-hidden="true" />
       </header>
       <main className="app-shell__main">{children}</main>
       <nav aria-label="Mobile primary" className="app-shell__bottom-nav">

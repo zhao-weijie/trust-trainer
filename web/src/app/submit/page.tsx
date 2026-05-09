@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useMutation } from "convex/react";
-import { ArrowRight, ClipboardPaste, FileImage, Shield, ShieldCheck, Type } from "lucide-react";
+import { ArrowRight, Shield, ShieldCheck } from "lucide-react";
 import { AnalyticsPanel, BaseContentLayer, Button, Panel, ResultPanel, StatusBadge } from "@/components";
 import { api } from "@/lib/convexApi";
 import { sanitizeSubmission } from "@/lib/safety";
@@ -55,7 +55,7 @@ export default function SubmitPage() {
             <StatusBadge tone={hasInput ? "success" : "draft"}>{hasInput ? "PII masked" : "Text first"}</StatusBadge>
           </>
         }
-        footer={hasInput ? "The analyzed artifact is redacted and URL-defanged before it enters the review loop." : undefined}
+        footer={hasInput ? "PII is masked and suspicious URLs are defanged before display." : undefined}
       >
         {hasInput ? (
           <div className="artifact-preview artifact-preview--phone">
@@ -68,31 +68,12 @@ export default function SubmitPage() {
               <Shield size={72} strokeWidth={1.7} />
             </div>
             <h2>Start Your Safety Check</h2>
-            <p>Analyze suspicious messages to protect yourself from scams. Screenshot analysis is not enabled in this demo.</p>
+            <p>Paste a suspicious message and turn it into a quick safety check.</p>
           </div>
         )}
       </BaseContentLayer>
 
-      <AnalyticsPanel title={hasInput ? "Analysis readiness" : "Choose input"} kicker="Step 01">
-        <div className="intake-action-list">
-          <button className="intake-action" type="button" onClick={() => document.getElementById("suspicious-content")?.focus()}>
-            <span className="intake-action__icon" aria-hidden="true"><Type size={22} /></span>
-            <span className="intake-action__body">
-              <span className="intake-action__title">Paste Suspicious Text</span>
-              <span className="intake-action__meta">Copy and paste emails, SMS, or chat messages</span>
-            </span>
-            <ArrowRight size={18} aria-hidden="true" />
-          </button>
-          <button className="intake-action" type="button" disabled title="Screenshot analysis is not implemented yet.">
-            <span className="intake-action__icon" aria-hidden="true"><FileImage size={22} /></span>
-            <span className="intake-action__body">
-              <span className="intake-action__title">Upload Image/Screenshot</span>
-              <span className="intake-action__meta">Disabled until real OCR or multimodal analysis exists</span>
-            </span>
-            <StatusBadge tone="draft">Soon</StatusBadge>
-          </button>
-        </div>
-
+      <AnalyticsPanel title={hasInput ? "Ready to check" : "Check a message"} kicker="Step 01">
         <Panel title="Paste or seed content" eyebrow="Input">
           <label className="field">
             Source type
@@ -133,14 +114,11 @@ export default function SubmitPage() {
               </button>
             ))}
           </div>
-        </Panel>
 
-        <Panel title="Privacy verification" eyebrow="Before analysis">
           <div className="status-stack">
             <StatusBadge tone={hasInput ? "success" : "draft"}>PII masked locally</StatusBadge>
             <StatusBadge tone={hasInput ? "success" : "draft"}>URLs defanged before display</StatusBadge>
           </div>
-          <p className="muted">Emails, phone numbers, account-like identifiers, addresses, and simple names are masked.</p>
           {error && <p className="form-error">{error}</p>}
           <Button disabled={!canSubmit || isSubmitting} onClick={() => void submit()}>
             {isSubmitting ? "Submitting..." : "Submit for analysis"} <ShieldCheck size={15} />
@@ -155,7 +133,7 @@ export default function SubmitPage() {
             description={
               result.scope_status === "out_of_scope_spam"
                 ? "This is advertising or generic spam, not phishing training material."
-                : "Draft prefilter only. A human reviewer must approve this before it becomes a family drill."
+                : "Use this safety check to spot the risk, then practice the same habit in a reviewed drill."
             }
             redFlags={result.red_flags}
             safestAction={result.safest_action}
@@ -169,18 +147,11 @@ export default function SubmitPage() {
             {result.skeptical_claims.length > 0 && (
               <p className="muted">Caution notes: {result.skeptical_claims.join(" ")}</p>
             )}
-            <Link className="button button--primary button--md" href="/admin">
-              Open human review <ArrowRight size={15} />
+            <Link className="button button--primary button--md" href="/challenge/approved-draft-seed-government-grant">
+              Try a safety drill <ArrowRight size={15} />
             </Link>
           </ResultPanel>
-        ) : (
-          <Panel title="Human review" eyebrow="Next step">
-            <p className="muted">A submitted case creates a review queue item and draft quiz. Nothing becomes playable until admin approval.</p>
-            <Button disabled={!hasInput} onClick={() => void navigator.clipboard?.writeText(sanitized.defanged_text)} variant="ghost">
-              <ClipboardPaste size={15} /> Copy safe preview
-            </Button>
-          </Panel>
-        )}
+        ) : null}
       </AnalyticsPanel>
     </div>
   );
