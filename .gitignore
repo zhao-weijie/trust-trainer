@@ -1,3 +1,4 @@
 raw_datasets/
 web/.next/
 web/node_modules/
+.env
