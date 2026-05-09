@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useMutation } from "convex/react";
-import { ArrowRight, Shield, ShieldCheck } from "lucide-react";
+import { ClipboardCheck, Shield, ShieldCheck } from "lucide-react";
 import { AnalyticsPanel, BaseContentLayer, Button, Panel, ResultPanel, StatusBadge } from "@/components";
 import { api } from "@/lib/convexApi";
 import { sanitizeSubmission } from "@/lib/safety";
@@ -147,8 +147,8 @@ export default function SubmitPage() {
             {result.skeptical_claims.length > 0 && (
               <p className="muted">Caution notes: {result.skeptical_claims.join(" ")}</p>
             )}
-            <Link className="button button--primary button--md" href="/challenge/approved-draft-seed-government-grant">
-              Try a safety drill <ArrowRight size={15} />
+            <Link className="button button--primary button--md" href="/admin">
+              Open human review <ClipboardCheck size={15} />
             </Link>
           </ResultPanel>
         ) : null}

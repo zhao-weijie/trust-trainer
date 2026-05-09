@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowRight, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { AnalyticsPanel, BaseContentLayer, DrillOptions, ResultPanel, StatusBadge } from "@/components";
 import { api } from "@/lib/convexApi";
 import type { AnswerChoice, ApprovedDrill, Attempt } from "@/lib/types";
-
-const nextDrillHref = "/challenge/approved-draft-seed-phishing-url-login";
 
 export function ChallengeClient({ id }: { id: string }) {
   const drill = useQuery(api.domain.getApprovedDrill, { id }) as ApprovedDrill | null | undefined;
@@ -114,14 +112,9 @@ export function ChallengeClient({ id }: { id: string }) {
             <div className="tag-list">
               {drill.skill_tags.map((tag) => <span className="sample-chip" key={tag}>{tag}</span>)}
             </div>
-            <div className="action-row">
-              <Link className="button button--primary button--md" href={nextDrillHref}>
-                Try another drill <ArrowRight size={15} />
-              </Link>
-              <Link className="button button--ghost button--md" href="/dashboard">
-                <BarChart3 size={15} /> View dashboard
-              </Link>
-            </div>
+            <Link className="button button--primary button--md" href="/dashboard">
+              <BarChart3 size={15} /> View dashboard
+            </Link>
           </ResultPanel>
         ) : null}
       </AnalyticsPanel>
