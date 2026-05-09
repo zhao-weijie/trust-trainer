@@ -16,13 +16,13 @@ type NavItem = {
 const desktopNavItems: NavItem[] = [
   { href: "/submit", label: "Scam Check", icon: Upload },
   { href: "/admin", label: "Review", icon: ClipboardCheck },
-  { href: "/challenge/approved-draft-seed-government-grant", label: "Drill", icon: GraduationCap, activePrefix: "/challenge" },
+  { href: "/challenge", label: "Drill", icon: GraduationCap, activePrefix: "/challenge" },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 }
 ];
 
 const mobileNavItems: NavItem[] = [
   { href: "/submit", label: "Scam Check", icon: ShieldCheck },
-  { href: "/challenge/approved-draft-seed-government-grant", label: "Drills", icon: GraduationCap, activePrefix: "/challenge" },
+  { href: "/challenge", label: "Drills", icon: GraduationCap, activePrefix: "/challenge" },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 }
 ];
 

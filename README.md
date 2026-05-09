@@ -5,7 +5,7 @@ Trust Trainer turns suspicious digital content into human-reviewed family safety
 Public demo:
 
 ```text
-https://web-one-rho-kt48p1kwl2.vercel.app
+https://trust-trainer.vercel.app
 ```
 
 Core demo path:
