@@ -1,13 +1,13 @@
  ````markdown
-# SecondLook — A Warning Classifier for the AI Internet
+# Trust Trainer — A Warning Classifier for the AI Internet
 
 ## Elevator Pitch
 
-**SecondLook is an open-source browser extension that helps non-AI-native users know when to pause before believing or sharing online content.**
+**Trust Trainer is an open-source browser extension that helps non-AI-native users know when to pause before believing or sharing online content.**
 
 As AI-generated text, fake images, synthetic screenshots, and hallucinated claims become common across social media and the web, many everyday users do not yet have the instincts to spot what deserves skepticism. They may not know what “hallucination” means, how realistic AI images can look, or how easily a confident post can invent studies, sources, or quotes.
 
-SecondLook does not try to be the final judge of truth. Instead, it acts as a **warning classifier**: it flags posts, images, screenshots, and claims that deserve a second look.
+Trust Trainer does not try to be the final judge of truth. Instead, it acts as a **warning classifier**: it flags posts, images, screenshots, and claims that deserve a second look.
 
 Its purpose is simple:
 
@@ -51,7 +51,7 @@ Instead, the product should ask:
 
 > **“Would a normal user benefit from a warning here?”**
 
-SecondLook helps users notice the moments where they should pause:
+Trust Trainer helps users notice the moments where they should pause:
 
 - a health claim with no source
 - a financial claim with a specific number
@@ -69,7 +69,7 @@ The goal is to train judgment.
 
 ## Product Concept
 
-SecondLook runs as a lightweight browser extension.
+Trust Trainer runs as a lightweight browser extension.
 
 As users browse Reddit, X, Facebook, WhatsApp Web, Substack, news sites, blogs, or search results, it quietly scans visible content and highlights risky moments in plain language.
 
@@ -87,7 +87,7 @@ Example warnings:
 > **Vague authority**  
 > This says “experts say” but does not name or link to the experts.
 
-SecondLook avoids technical jargon. It does not say:
+Trust Trainer avoids technical jargon. It does not say:
 
 > “Synthetic probability: 78%.”
 
@@ -101,13 +101,13 @@ It says:
 
 Most AI detection tools try to classify content as AI-generated or human-written.
 
-SecondLook is different.
+Trust Trainer is different.
 
 It is not just an AI detector.
 
 It is a **user judgment trainer**.
 
-| Existing tools | SecondLook |
+| Existing tools | Trust Trainer |
 |---|---|
 | Detect AI-generated content | Detect moments that deserve caution |
 | Give binary labels | Give plain-language warnings |
@@ -116,7 +116,7 @@ It is a **user judgment trainer**.
 | Built for experts, teachers, or moderators | Built for everyday internet users |
 | Says “AI” or “not AI” | Says “pause, check, or ignore” |
 
-SecondLook is not trying to win an argument about whether something is AI-generated.
+Trust Trainer is not trying to win an argument about whether something is AI-generated.
 
 It is helping the user build better instincts.
 
@@ -132,7 +132,7 @@ Tools like GPTZero, Copyleaks, Pangram, and other AI detectors try to determine 
 
 These are useful in some contexts, but they focus on authorship rather than user risk. A human-written post can still be false, and an AI-assisted post can still be accurate.
 
-SecondLook focuses on:
+Trust Trainer focuses on:
 
 > “Does this deserve caution?”
 
@@ -146,7 +146,7 @@ Some tools try to detect whether an image was AI-generated.
 
 This is useful, but it can be unreliable and lacks context. An AI-generated fantasy image is harmless. An AI-generated image attached to breaking news, politics, scams, or medical advice is much more important.
 
-SecondLook looks at both the image and the surrounding context.
+Trust Trainer looks at both the image and the surrounding context.
 
 ### 3. Provenance and Content Credential Tools
 
@@ -154,7 +154,7 @@ Tools based on Content Credentials or C2PA can help users inspect whether an ima
 
 These are valuable, but coverage is uneven. Many images online have no provenance information, and most everyday users do not know how to interpret metadata.
 
-SecondLook can use provenance as one signal, but translates it into plain-language guidance.
+Trust Trainer can use provenance as one signal, but translates it into plain-language guidance.
 
 ### 4. Community Notes and Platform Labels
 
@@ -162,7 +162,7 @@ Platforms like X and Meta use community notes or labels to add context to mislea
 
 These can be helpful, but they are platform-specific, often arrive late, and only cover a fraction of content.
 
-SecondLook is browser-wide and can warn the user before a community note exists.
+Trust Trainer is browser-wide and can warn the user before a community note exists.
 
 ### 5. Manual Search and Reverse-Image Search
 
@@ -170,7 +170,7 @@ Motivated users can Google the claim, search the headline, check fact-checking s
 
 But this requires the user to already suspect something is wrong.
 
-SecondLook helps with the earlier moment:
+Trust Trainer helps with the earlier moment:
 
 > “Should I check this at all?”
 
@@ -185,13 +185,13 @@ Many non-AI-native users ask someone they trust:
 
 This is one of the clearest signs of the problem.
 
-SecondLook does not replace trusted humans. It gives users an always-available first layer of guidance, so they can build their own instincts over time.
+Trust Trainer does not replace trusted humans. It gives users an always-available first layer of guidance, so they can build their own instincts over time.
 
 ---
 
 ## How It Works
 
-SecondLook combines three layers:
+Trust Trainer combines three layers:
 
 ### 1. Local Warning Classifier
 
@@ -246,17 +246,17 @@ Local model flags risky content
 → improved local warning classifier
 ```
 
-Over time, SecondLook gets better at knowing when to warn and when to stay quiet.
+Over time, Trust Trainer gets better at knowing when to warn and when to stay quiet.
 
 ---
 
 ## Privacy and Trust
 
-SecondLook is open-source because users should not have to trust a black-box browser extension to protect them from black-box AI content.
+Trust Trainer is open-source because users should not have to trust a black-box browser extension to protect them from black-box AI content.
 
 The extension is local-first: claims, images, and posts are analyzed in the browser whenever possible.
 
-By default, SecondLook does **not** upload:
+By default, Trust Trainer does **not** upload:
 
 * browsing history
 * full page text
@@ -266,7 +266,7 @@ By default, SecondLook does **not** upload:
 * full URLs
 * personal conversations
 
-For collaborative filtering, SecondLook only shares the minimum useful signal, such as:
+For collaborative filtering, Trust Trainer only shares the minimum useful signal, such as:
 
 * hashed claim fingerprints
 * coarse warning categories
@@ -300,7 +300,7 @@ Normally, they might send it to a more AI-native family member and ask:
 
 > “Is this real?”
 
-With SecondLook, the browser highlights it and says:
+With Trust Trainer, the browser highlights it and says:
 
 > **Needs a source**
 > This is a health claim with a specific number, but no source is shown. Check before believing or sharing.
@@ -350,13 +350,13 @@ It is trust.
 
 People need lightweight help deciding what deserves attention, skepticism, or verification. This is especially important for users who did not grow up with AI tools and do not yet have an intuitive feel for hallucinations, synthetic media, or generated misinformation.
 
-SecondLook gives them that intuition gradually, in context, while they browse.
+Trust Trainer gives them that intuition gradually, in context, while they browse.
 
 ---
 
 ## One-Line Pitch
 
-**SecondLook is an open-source browser extension that helps non-AI-native users build their AI detector radar by warning them when online claims, images, or screenshots deserve a second look.**
+**Trust Trainer is an open-source browser extension that helps non-AI-native users build their AI detector radar by warning them when online claims, images, or screenshots deserve a second look.**
 
 ---
 

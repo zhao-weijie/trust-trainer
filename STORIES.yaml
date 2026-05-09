@@ -1,5 +1,5 @@
 version: 1
-project: SecondLook Trainer
+project: Trust Trainer
 app_strategy: single_mobile_friendly_web_app
 principles:
   - The instant scam check and the safety drill are separate user stories.
@@ -87,7 +87,7 @@ experiences:
 
       - id: forwarder.forward_directly
         title: Forward Directly From Messaging Apps
-        story: As a user, I want to forward suspicious content directly into SecondLook from WhatsApp or email.
+        story: As a user, I want to forward suspicious content directly into Trust Trainer from WhatsApp or email.
         hackathon_scope: do_not_build_now
         reason: Real messaging integrations are slow and judge-invisible compared with the review/play loop.
 
@@ -252,10 +252,10 @@ experiences:
         reason: Reminder mechanics are not needed for the live demo.
 
 demo_path:
-  - Mobile forwarder receives suspicious message and pastes it into SecondLook.
+  - Mobile forwarder receives suspicious message and pastes it into Trust Trainer.
   - Browser-side redaction masks PII and defangs suspicious URLs.
   - User sees the redacted submission plus a redaction notice.
-  - SecondLook returns suspected_scam, red flags, and safest next action.
+  - Trust Trainer returns suspected_scam, red flags, and safest next action.
   - User submits the case for review or creates a training candidate.
   - Admin sees the LLM judge prefilter and quiz draft.
   - Admin edits, approves, and publishes the quiz question.
@@ -265,7 +265,7 @@ demo_path:
 
 build_priority:
   must_build:
-    - Mobile intake and instant SecondLook check.
+    - Mobile intake and instant Trust Trainer check.
     - Browser-side PII redaction and URL defanging.
     - Redacted submission display and scam status result.
     - Admin review queue with LLM judge prefilter.

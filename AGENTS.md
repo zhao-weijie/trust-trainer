@@ -8,7 +8,7 @@
 
 ## Project
 
-- Project: SecondLook Trainer.
+- Project: Trust Trainer.
 - Goal: Turn suspicious digital content into human-reviewed safety drills, record a demo to win hackathon prizes.
 - Core loop: suspicious content -> AI PII redaction -> human admin review -> playable family challenge -> skill dashboard.
 

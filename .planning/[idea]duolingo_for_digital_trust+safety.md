@@ -1,11 +1,11 @@
 ````markdown
-# SecondLook Trainer — Turn Suspicious Content Into Safety Drills
+# Trust Trainer — Turn Suspicious Content Into Safety Drills
 
 ## Elevator Pitch
 
-**SecondLook Trainer turns suspicious digital content - emails, WhatsApp messages, webpages, social posts, screenshots, AI images, videos, ads, and viral claims - into safe, anonymized practice drills for everyone else.**
+**Trust Trainer turns suspicious digital content - emails, WhatsApp messages, webpages, social posts, screenshots, AI images, videos, ads, and viral claims - into safe, anonymized practice drills for everyone else.**
 
-Instead of building a hand-authored phishing quiz, SecondLook creates a living challenge library from real-world suspicious content:
+Instead of building a hand-authored phishing quiz, Trust Trainer creates a living challenge library from real-world suspicious content:
 
 ```text
 submit suspicious content
@@ -47,7 +47,7 @@ Today, many people rely on workarounds:
 
 That last behavior is the product wedge, but the product should not stop at direct messages.
 
-People are already forwarding suspicious content to trusted relatives, taking screenshots of posts, pasting links into chats, and asking “does this look real?” SecondLook captures that behavior and turns any suspicious digital artifact into a privacy-conscious training flywheel.
+People are already forwarding suspicious content to trusted relatives, taking screenshots of posts, pasting links into chats, and asking “does this look real?” Trust Trainer captures that behavior and turns any suspicious digital artifact into a privacy-conscious training flywheel.
 
 ---
 
@@ -72,13 +72,13 @@ In real life, the best answer is often not “fake.” It might be:
 - do not forward yet
 - treat it as an opinion, not a fact
 
-SecondLook trains these practical decisions through short drills generated from the suspicious content people actually encounter across the web.
+Trust Trainer trains these practical decisions through short drills generated from the suspicious content people actually encounter across the web.
 
 ---
 
 ## Product Concept
 
-SecondLook Trainer is a web-based companion game and challenge generator for AI-era media literacy.
+Trust Trainer is a web-based companion game and challenge generator for AI-era media literacy.
 
 Users can:
 
@@ -110,7 +110,7 @@ Each drill asks:
 
 > **“What would you do?”**
 
-Then SecondLook reveals the red flags, explains the safest next step in plain language, and tags the skill being trained.
+Then Trust Trainer reveals the red flags, explains the safest next step in plain language, and tags the skill being trained.
 
 ---
 
@@ -149,11 +149,11 @@ The original artifact is redacted and converted into a reusable safe drill. It i
 
 ## Why This Is Different
 
-SecondLook Trainer is not an AI detector and not a traditional phishing quiz.
+Trust Trainer is not an AI detector and not a traditional phishing quiz.
 
 It is **trust-but-verify practice for the modern internet**.
 
-| Existing approach      | Limitation                                   | SecondLook Trainer                    |
+| Existing approach      | Limitation                                   | Trust Trainer                    |
 | ---------------------- | -------------------------------------------- | ------------------------------------- |
 | AI detectors           | Focus on whether content is AI-generated     | Trains what action to take            |
 | Phishing simulations   | Mostly email-focused and enterprise-oriented | Consumer-friendly and multimodal      |
@@ -179,7 +179,7 @@ Short 1–3 minute practice rounds that teach one skill at a time:
 
 ### 2. Content-To-Drill
 
-Users paste, upload, link, screenshot, or forward suspicious digital content. SecondLook converts it into:
+Users paste, upload, link, screenshot, or forward suspicious digital content. Trust Trainer converts it into:
 
 * a redacted scenario
 * multiple-choice next actions
@@ -212,7 +212,7 @@ Practice drills never collect passwords, OTPs, payments, bank details, or sensit
 
 Users can paste, forward, link, screenshot, or upload suspicious content to a hosted checker.
 
-SecondLook responds with:
+Trust Trainer responds with:
 
 * red flags
 * recommended next action
@@ -221,7 +221,7 @@ SecondLook responds with:
 
 ### 6. Skill Graph
 
-SecondLook tracks which instincts users are building:
+Trust Trainer tracks which instincts users are building:
 
 * urgency traps
 * link inspection
@@ -239,7 +239,7 @@ The product is not just “you got 8/10.” It says:
 
 ## Privacy and Trust
 
-SecondLook Trainer should be open-source and privacy-conscious by design.
+Trust Trainer should be open-source and privacy-conscious by design.
 
 Users should be able to verify:
 
@@ -266,7 +266,7 @@ The goal is to teach trust without asking users to trust another black box.
 
 ## How It Works
 
-SecondLook combines three layers:
+Trust Trainer combines three layers:
 
 ### 1. User-Sourced Challenge Library
 
@@ -410,15 +410,15 @@ People need a safe place to practice the habits that protect them online:
 
 > pause, inspect, verify, and avoid sharing too quickly.
 
-SecondLook Trainer helps users build those instincts before the stakes are real, using the suspicious content already spreading through inboxes, group chats, feeds, search results, ads, and webpages.
+Trust Trainer helps users build those instincts before the stakes are real, using the suspicious content already spreading through inboxes, group chats, feeds, search results, ads, and webpages.
 
-Misinformation, scams, and AI slop spread through every digital surface. To reduce the spread, SecondLook turns each suspicious artifact into a training example that improves the next person’s judgment.
+Misinformation, scams, and AI slop spread through every digital surface. To reduce the spread, Trust Trainer turns each suspicious artifact into a training example that improves the next person’s judgment.
 
 ---
 
 ## One-Line Pitch
 
-**SecondLook Trainer turns suspicious digital content into safe, anonymized practice drills that teach families when to click, ignore, verify, report, or pause before sharing.**
+**Trust Trainer turns suspicious digital content into safe, anonymized practice drills that teach families when to click, ignore, verify, report, or pause before sharing.**
 
 ---
 

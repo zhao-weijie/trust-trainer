@@ -1,4 +1,4 @@
-# SecondLook Trainer Architecture And Build Plan
+# Trust Trainer Architecture And Build Plan
 
 Source of truth: [hackathon-brief.md](hackathon-brief.md).
 Product stories: [STORIES.yaml](STORIES.yaml).
@@ -9,14 +9,14 @@ Sponsor/tooling decisions: [SPONSOR_TOOLING.md](SPONSOR_TOOLING.md).
 Status: at risk if this becomes either a generic quiz app or a vague AI truth checker. The demo must show one product with three connected experiences:
 
 ```text
-suspected content -> browser-side PII redaction -> instant SecondLook status -> human review/quiz creator -> published question -> mobile quiz -> skill/dashboard loop
+suspected content -> browser-side PII redaction -> instant Trust Trainer status -> human review/quiz creator -> published question -> mobile quiz -> skill/dashboard loop
 ```
 
 Do not spend hackathon time on WhatsApp API approval, browser extensions, production auth, public sharing, real retraining, or generic spam filtering. Those are distractions.
 
 ## Demo-Critical User Journeys
 
-1. Instant SecondLook check
+1. Instant Trust Trainer check
    - Mobile-first paste/upload for suspicious SMS, WhatsApp, email, screenshots, links, or posts.
    - Browser masks obvious PII and defangs suspicious URLs before external analysis.
    - UI shows the redacted submission and a notice: "PII was redacted in your browser before analysis."
@@ -54,7 +54,7 @@ mobile paste/upload
 -> dashboard updates skills and reviewed dataset rows
 ```
 
-The safety drill is not the first response to the submitter. The first response is an instant SecondLook status. The drill is created after reviewer/admin action.
+The safety drill is not the first response to the submitter. The first response is an instant Trust Trainer status. The drill is created after reviewer/admin action.
 
 ## Recommended Stack
 
@@ -279,7 +279,7 @@ normalize input locally
 -> mask PII locally before external calls
 -> optional safety screen
 -> cheap structured scam check / label extraction
--> instant SecondLook result
+-> instant Trust Trainer result
 -> optional admin review / quiz creation
 -> structured drill draft generation after admin action
 -> optional safe personalization of scenario wording
@@ -385,7 +385,7 @@ raw public row or user submission
 -> approved drill + cleaned dataset row
 ```
 
-Adaption should improve or validate the dataset fields that make SecondLook more than a quiz app:
+Adaption should improve or validate the dataset fields that make Trust Trainer more than a quiz app:
 
 ```text
 content_type
@@ -461,7 +461,7 @@ Send Adaption only redacted/defanged rows during the hackathon demo. Treat Adapt
 ```json
 {
   "adapter": "adaption",
-  "input_file": "secondlook_seed_rows.jsonl",
+  "input_file": "trust_trainer_seed_rows.jsonl",
   "max_rows": 30,
   "estimate": true,
   "column_mapping": {

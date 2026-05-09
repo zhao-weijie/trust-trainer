@@ -26,7 +26,7 @@ These are not on the critical path. Add only after the submit -> review -> chall
 | Dataset cleaning/evaluation/export | Adaption Adaptive Data | Admin-only dataset improvement/export view. | The core review/play loop is not done. |
 | Synthetic screenshots | fal.ai Model APIs | Safe fake screenshots and scam-like visual artifacts. | Veo/Gemini media path is already enough. |
 | Real-vs-AI image analysis | Gemini image understanding | Explain source-image context and visual red flags. | Exa metadata alone tells the story. |
-| Voice coaching sidecar | Gemini Live API / Gemini Flash Live | Optional "parent calls SecondLook" demo mode for Best Voice Agent. | Text chat, browser TTS, pre-recorded audio. |
+| Voice coaching sidecar | Gemini Live API / Gemini Flash Live | Optional "parent calls Trust Trainer" demo mode for Best Voice Agent. | Text chat, browser TTS, pre-recorded audio. |
 | Generative music | Lyria RealTime | Only useful for a media-heavy bumper or generated scam-ad soundtrack. It does not strengthen the core safety product much. | Skip it. |
 | Provider resilience, deploy hardening | Cloudflare AI Gateway, Workers, Turnstile, R2 | Gateway for provider routing/observability, Turnstile for public submit, R2 for uploaded assets if Convex storage is insufficient. | Direct provider calls, local file storage, no public submit. |
 | Open-model hosted fallback | Cloudflare Workers AI | Useful sponsor fallback for classification/extraction if OpenAI/OpenRouter fail. | Ollama local or deterministic seed path. |
@@ -40,7 +40,7 @@ user submission
 -> local defang + PII redaction
 -> optional safety screen
 -> cheap scam-status and label extraction
--> instant SecondLook result
+-> instant Trust Trainer result
 -> optional admin quiz creation
 -> drill draft generation
 -> admin review

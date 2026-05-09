@@ -20,8 +20,8 @@
 
 ## Project Commitment
 
-- Project name: SecondLook Trainer
-- One-liner: SecondLook Trainer gives families an instant SecondLook on suspicious digital content, then turns reviewed cases into safety drills that teach when to click, ignore, verify, report, or pause before sharing.
+- Project name: Trust Trainer
+- One-liner: Trust Trainer gives families an instant safety check on suspicious digital content, then turns reviewed cases into safety drills that teach when to click, ignore, verify, report, or pause before sharing.
 - Target user: Non-AI-native families and everyday internet users who forward suspicious messages, screenshots, emails, posts, or links to a more technical person for help.
 - Pain: Suspicious content is everywhere, but most users do not know what to inspect, what action to take, or when sharing/clicking becomes risky.
 - Why now: AI has made convincing scams, fake screenshots, synthetic media, and hallucinated claims cheap enough to flood normal inboxes, group chats, and feeds.
@@ -30,9 +30,9 @@
 ## Demo Story
 
 - The Pledge: "This is the message your parent forwards you at midnight asking if it is real."
-- The Turn: Forward/paste a suspicious WhatsApp-style message or email, then watch SecondLook redact PII browser-side and return a clear result: verified scam, suspected scam, or legitimate.
+- The Turn: Forward/paste a suspicious WhatsApp-style message or email, then watch Trust Trainer redact PII browser-side and return a clear result: verified scam, suspected scam, or legitimate.
 - The Prestige: A human admin turns the reviewed case into a quiz question, a family member plays it, and the dashboard shows which trust/safety instincts the family is building.
-- First wow moment: Suspicious content becomes a redacted, defanged SecondLook result with red flags and safest next action in under 10 seconds.
+- First wow moment: Suspicious content becomes a redacted, defanged Trust Trainer result with red flags and safest next action in under 10 seconds.
 - Final reveal: "AI gives the first pass, humans approve what gets taught, and one scary message trains the whole family."
 
 ## MVP Path
@@ -48,7 +48,7 @@
 - Build plan: `ARCHITECTURE.md`.
 - Sponsor/tooling matrix: `SPONSOR_TOOLING.md`.
 - Environment contract: `.env.sample`.
-- Demo route: submit suspicious content -> instant SecondLook result -> admin review/quiz creator -> playable challenge -> skill dashboard.
+- Demo route: submit suspicious content -> instant Trust Trainer result -> admin review/quiz creator -> playable challenge -> skill dashboard.
 - Technical stance: ship a polished deterministic demo first, then wire sponsor tools behind adapters with OpenRouter/Ollama/local fallbacks.
 - Key rule: AI output is draft material until a human admin approves it.
 
@@ -56,7 +56,7 @@
 
 - Scope boundary: generic spam is out of scope. Only use examples that involve phishing, smishing, impersonation, credential theft, payment theft, harmful scams, malicious links, or legitimate contrast cases.
 - Do not treat `spam` as equivalent to `phishing`. Spam-only datasets are weak seed sources unless individual rows can be re-labeled as a concrete harm scenario.
-- Dataset gap thesis: Public datasets are decent for phishing emails and phishing URLs, but weak for family-facing SMS, WhatsApp, and chat scams. SecondLook uses public datasets only to bootstrap. The long-term moat is a reviewed, privacy-preserving dataset of real consumer scam scenarios, labeled by safest next action rather than just malicious/benign.
+- Dataset gap thesis: Public datasets are decent for phishing emails and phishing URLs, but weak for family-facing SMS, WhatsApp, and chat scams. Trust Trainer uses public datasets only to bootstrap. The long-term moat is a reviewed, privacy-preserving dataset of real consumer scam scenarios, labeled by safest next action rather than just malicious/benign.
 - Priority 1: Phishing Email: 11 Curated Datasets - https://figshare.com/articles/dataset/Phishing_Email_11_Curated_Datasets/24952503
   - Use for forwarded-email intake demos and phishing-only examples, especially Nazario and Nigerian Fraud subsets.
   - Prefer subsets explicitly labeled phishing over mixed spam/phishing corpora.
@@ -76,7 +76,7 @@
   - Use only after admin approval; keep these as demo-safe examples rather than pretending they are real corpus rows.
 - Auxiliary reviewed source: Unified Scam Detection - https://www.kaggle.com/datasets/sarazahran1/unified-scam-detection
   - Referenced by the Advanced Scam Message Detection notebook: https://www.kaggle.com/code/sarazahran1/advanced-scam-message-detection
-  - Interesting because the schema appears close to SecondLook's teaching model: `scammer_message`, `user_response`, `scam_tactic`, `risk_level`, `response_type`, `user_success`, and tactic indicators.
+  - Interesting because the schema appears close to Trust Trainer's teaching model: `scammer_message`, `user_response`, `scam_tactic`, `risk_level`, `response_type`, `user_success`, and tactic indicators.
   - License: Apache 2.0 according to Kaggle.
   - Treat as reviewed/synthetic-style seed material only. Kaggle has little dataset description/provenance, so do not pitch it as a verified real-world scam corpus.
   - Run every row through `scope_status` and admin review before use.
@@ -117,7 +117,7 @@ legitimate URL row + nearby phishing URL row
 -> approved legitimate-vs-phishing drill
 ```
 
-Adaption sponsor thesis: SecondLook is not just cleaning existing datasets. It adapts raw public phishing URL rows into paired, Exa-grounded, human-reviewed teaching examples, then helps create the missing reviewed SMS/WhatsApp scam literacy dataset from real user submissions.
+Adaption sponsor thesis: Trust Trainer is not just cleaning existing datasets. It adapts raw public phishing URL rows into paired, Exa-grounded, human-reviewed teaching examples, then helps create the missing reviewed SMS/WhatsApp scam literacy dataset from real user submissions.
 
 Required normalized labels:
 
@@ -166,7 +166,7 @@ in_scope_phishing_or_scam, benign_contrast, out_of_scope_spam, reject
 
 ## Risks
 
-- Top demo risk: The project looks like a quiz app instead of an instant safety checker plus reviewed training loop. Fix by opening with a pasted suspicious artifact receiving a redacted SecondLook result, then show admin-reviewed quiz creation.
+- Top demo risk: The project looks like a quiz app instead of an instant safety checker plus reviewed training loop. Fix by opening with a pasted suspicious artifact receiving a redacted Trust Trainer result, then show admin-reviewed quiz creation.
 - Top integration risk: Real WhatsApp Business API access is slow or unavailable. Fix by making paste/screenshot/share intake live and describing WhatsApp API as production intake.
 - Top time risk: Overbuilding messaging integrations instead of the review-and-play loop judges can see.
 

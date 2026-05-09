@@ -37,11 +37,11 @@
 - One slide mentions a remarkable tablet for the winner, but the track label is not readable from the photo.
 - One slide mentions US$1,000 credits for the project with the most used connectors, likely a connector-heavy sponsor track; label is partly unreadable.
 
-## Revised Strategy For SecondLook
+## Revised Strategy For Trust Trainer
 
 Primary target: Overall winner.
 
-The idea is socially useful, but that alone will not win. The demo must feel slightly deranged in the first seconds: a live feed of absurdly confident AI-internet claims, scammy screenshots, fake studies, miracle health advice, finance bait, and synthetic breaking news. SecondLook stamps the risky parts in-place before the user shares them.
+The idea is socially useful, but that alone will not win. The demo must feel slightly deranged in the first seconds: a live feed of absurdly confident AI-internet claims, scammy screenshots, fake studies, miracle health advice, finance bait, and synthetic breaking news. Trust Trainer stamps the risky parts in-place before the user shares them.
 
 Backup target: OpenAI / Codex.
 
@@ -71,7 +71,7 @@ Show a fake social feed with a share button. The user is about to share a post:
 
 "Doctors confirm this fruit lowers blood pressure by 60% in two weeks. Big Pharma hates this."
 
-SecondLook instantly stamps it:
+Trust Trainer instantly stamps it:
 
 - Needs a source
 - Medical claim
@@ -107,7 +107,7 @@ This is the secret sauce. Not "we call an LLM." The secret is warning classifica
 
 ### 1:30-End Prestige
 
-"SecondLook is not a truth oracle. It is the common-sense layer your browser needs for the AI internet."
+"Trust Trainer is not a truth oracle. It is the common-sense layer your browser needs for the AI internet."
 
 Show final dashboard:
 
@@ -137,4 +137,4 @@ Show final dashboard:
 
 ## Brutal Assessment
 
-SecondLook can win if it becomes a memorable anti-slop browser layer. It will lose if it presents as a careful civic-tech essay. Make the first screen ridiculous, make the overlay beautiful, then make the data loop credible.
+Trust Trainer can win if it becomes a memorable anti-slop browser layer. It will lose if it presents as a careful civic-tech essay. Make the first screen ridiculous, make the overlay beautiful, then make the data loop credible.
