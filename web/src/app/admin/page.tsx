@@ -271,7 +271,7 @@ function DraftEditor({
         generated_asset_request_id: payload.requestId,
         generated_asset_prompt: payload.prompt
       });
-      setNotice("fal image generated and attached to this draft.");
+      setNotice("fal edited the seed image and attached it to this draft.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not generate fal image.");
     } finally {
@@ -300,7 +300,7 @@ function DraftEditor({
       </ResultPanel>
 
       <Panel title="fal.ai image artifact" eyebrow="Sponsor media step">
-        <p className="muted">Generate one safe synthetic phone-style artifact for this drill. It remains unplayable until admin approval.</p>
+        <p className="muted">Edit the seed chat screenshot into a safe synthetic drill artifact. It remains unplayable until admin approval.</p>
         <div className="action-row">
           <Button
             disabled={!falConfigured || isGeneratingImage || blocksPublish}
@@ -308,7 +308,7 @@ function DraftEditor({
             variant="secondary"
           >
             {isGeneratingImage ? <WandSparkles size={15} /> : <ImagePlus size={15} />}
-            {falConfigured === false ? "fal not configured" : isGeneratingImage ? "Generating..." : "Generate fal image"}
+            {falConfigured === false ? "fal not configured" : isGeneratingImage ? "Editing..." : "Generate fal edit"}
           </Button>
           {item.generated_asset_url && (
             <a className="button button--ghost button--md" href={item.generated_asset_url} rel="noreferrer" target="_blank">

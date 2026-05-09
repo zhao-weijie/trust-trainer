@@ -21,15 +21,16 @@ Trust Trainer now includes a server-side fal.ai image-generation step in the rev
 
 ```text
 reviewed scam scenario
--> fal-ai/nano-banana-2 synthetic phone-style artifact
+-> local seed chat screenshot uploaded to fal storage
+-> fal-ai/nano-banana-2/edit synthetic phone-style artifact
 -> generated image URL and fal request ID stored on the draft
 -> admin approval copies the artifact into the playable drill and reviewed dataset row
 -> family challenge displays the synthetic artifact beside the safest-action question
 ```
 
-The Next.js route `POST /api/fal/generate-drill-image` calls fal from the server only, using `FAL_KEY`. The browser never receives the key. If `FAL_KEY` is absent, admin review shows a disabled fal state and the text-only demo remains usable.
+The Next.js route `POST /api/fal/generate-drill-image` calls fal from the server only, using `FAL_KEY`. The browser never receives the key. The route uploads `web/public/fal-seeds/messenger-scam-template.png` to fal storage, then passes that URL to `fal-ai/nano-banana-2/edit` as `image_urls[0]`. If `FAL_KEY` is absent, admin review shows a disabled fal state and the text-only demo remains usable.
 
-This is intentionally not OCR, image detection, or a real phishing-image classifier. fal.ai is used to create safe synthetic multimodal training artifacts that still require human admin approval before play.
+This is intentionally not OCR, image detection, or a real phishing-image classifier. fal.ai is used to edit a safe seed image into realistic synthetic multimodal training artifacts that still require human admin approval before play.
 
 ## Optional Prize Expansions
 

@@ -1,5 +1,7 @@
 import { fal } from "@fal-ai/client";
+import { readFile } from "fs/promises";
 import { NextResponse } from "next/server";
+import path from "path";
 
 export const runtime = "nodejs";
 
@@ -8,7 +10,10 @@ type GenerateImageRequest = {
   threat_type?: string;
   safest_action?: string;
   red_flags?: string[];
+  seed_image_url?: string;
 };
+
+const localSeedImagePath = path.join(process.cwd(), "public", "fal-seeds", "messenger-scam-template.png");
 
 function seedFromText(value: string): number {
   let hash = 2166136261;
@@ -19,22 +24,30 @@ function seedFromText(value: string): number {
   return Math.abs(hash);
 }
 
-function buildFalPrompt(body: GenerateImageRequest): string {
+function buildFalEditPrompt(body: GenerateImageRequest): string {
   const redFlags = body.red_flags?.filter(Boolean).slice(0, 3).join(", ") || "urgent pressure, unsafe link";
   const scenario = body.scenario?.trim() || "A suspicious delivery-fee scam message";
   const safestAction = body.safest_action?.trim() || "Open the official app or website directly.";
 
   return [
-    "Create a safe synthetic educational image for a family scam-literacy drill.",
-    "Show a modern phone screenshot-style chat card, not a real app clone.",
-    "Use fictional sender names only. Do not include real brands, real phone numbers, QR codes, or clickable URLs.",
-    "If text is shown, make it clearly fake and use defanged placeholder links like hxxps://example[.]test.",
+    "Edit the seed image into a realistic but clearly synthetic scam-literacy training screenshot.",
+    "Preserve the seed image's phone screenshot composition, chat-message spacing, status bar, and messaging-app feel.",
+    "Replace the visible account name, profile details, and message copy so they match the scenario below.",
+    "Use fictional institutions and placeholder names only. Do not use real brands, real agencies, real phone numbers, QR codes, or clickable URLs.",
+    "If any URL appears, it must be defanged and fictional, for example hxxps://example[.]test.",
+    "Keep the artifact plausible enough for education, but avoid making it operationally useful for fraud.",
     `Scenario: ${scenario}`,
     `Threat type: ${body.threat_type || "phishing_or_scam"}.`,
-    `Visual red flags to imply: ${redFlags}.`,
+    `Red flags to make visible or implied: ${redFlags}.`,
     `Teaching outcome: ${safestAction}`,
-    "The image should look like a reviewed training artifact, not an operational scam."
+    "Return a single edited image."
   ].join(" ");
+}
+
+async function defaultSeedImageUrl(): Promise<string> {
+  const seedImage = await readFile(localSeedImagePath);
+  const file = new File([seedImage], "messenger-scam-template.png", { type: "image/png" });
+  return await fal.storage.upload(file);
 }
 
 function imageUrlFromResult(result: unknown): string | null {
@@ -57,42 +70,56 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as GenerateImageRequest;
-  const prompt = buildFalPrompt(body);
-  fal.config({ credentials: process.env.FAL_KEY });
+  try {
+    const body = (await request.json()) as GenerateImageRequest;
+    const prompt = buildFalEditPrompt(body);
+    fal.config({ credentials: process.env.FAL_KEY });
+    const seedImageUrl = body.seed_image_url?.trim() || (await defaultSeedImageUrl());
 
-  const result = await fal.subscribe("fal-ai/nano-banana-2", {
-    input: {
-      prompt,
-      num_images: 1,
-      aspect_ratio: "4:5",
-      output_format: "png",
-      safety_tolerance: "2",
-      resolution: "1K",
-      limit_generations: true,
-      seed: seedFromText(prompt)
+    const result = await fal.subscribe("fal-ai/nano-banana-2/edit", {
+      input: {
+        prompt,
+        image_urls: [seedImageUrl],
+        num_images: 1,
+        aspect_ratio: "auto",
+        output_format: "png",
+        safety_tolerance: "2",
+        resolution: "1K",
+        limit_generations: true,
+        seed: seedFromText(prompt)
+      }
+    });
+
+    const imageUrl = imageUrlFromResult(result);
+    if (!imageUrl) {
+      return NextResponse.json({ configured: true, error: "fal returned no image URL." }, { status: 502 });
     }
-  });
 
-  const imageUrl = imageUrlFromResult(result);
-  if (!imageUrl) {
-    return NextResponse.json({ configured: true, error: "fal returned no image URL." }, { status: 502 });
+    return NextResponse.json({
+      configured: true,
+      provider: "fal",
+      model: "fal-ai/nano-banana-2/edit",
+      imageUrl,
+      requestId: result.requestId,
+      prompt,
+      seedImageUrl
+    });
+  } catch (caught) {
+    return NextResponse.json(
+      {
+        configured: true,
+        error: caught instanceof Error ? caught.message : "fal image edit failed."
+      },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({
-    configured: true,
-    provider: "fal",
-    model: "fal-ai/nano-banana-2",
-    imageUrl,
-    requestId: result.requestId,
-    prompt
-  });
 }
 
 export async function GET() {
   return NextResponse.json({
     configured: Boolean(process.env.FAL_KEY),
     provider: "fal",
-    model: "fal-ai/nano-banana-2"
+    model: "fal-ai/nano-banana-2/edit",
+    seed: "/fal-seeds/messenger-scam-template.png"
   });
 }

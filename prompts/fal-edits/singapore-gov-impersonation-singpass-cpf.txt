@@ -1,0 +1,26 @@
+Edit the seed image into a realistic but clearly synthetic scam-literacy training screenshot for a Singapore government impersonation drill.
+
+Preserve the seed image's phone screenshot composition, chat-message spacing, status bar, and messaging-app feel. Replace the account name, profile details, badge/avatar, and message copy to match this scenario.
+
+Scenario: A fake Singapore government support account claims the recipient's Singpass account has been linked to suspicious CPF and bank activity. The sender pressures them to verify immediately through a private chat and asks which bank they use before sending a fake verification link.
+
+Make the account look suspicious:
+- username: sg.gov.verify-help
+- display name: Singapore Support Desk
+- new account
+- 0 followers
+- few posts
+- not followed by the user
+- generic crest-like icon, not the real Singapore lion head, Singpass logo, CPF logo, police crest, or any official agency logo
+
+Message copy to show:
+"Good afternoon. This is the Singapore Support Desk regarding urgent verification of your Singpass access."
+
+"Our system detected unusual CPF and bank-linked activity connected to your NRIC profile. To prevent temporary suspension, verification must be completed today."
+
+"Which bank do you use for PayNow or CPF withdrawals? We will send the secure verification step after confirmation."
+
+Safety constraints:
+Use fictional branding only. Do not include real government logos, QR codes, real phone numbers, real URLs, clickable links, NRIC numbers, account numbers, or exact personal data. If a URL appears, make it defanged and fictional, such as hxxps://verify-gov-sg[.]example[.]test.
+
+The image should look plausible enough for education, but clearly be a synthetic training artifact, not an operational scam. Return a single edited image.

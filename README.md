@@ -14,15 +14,15 @@ Core demo path:
 /submit -> /admin -> generate fal.ai drill image -> approve -> /challenge/[id] -> /dashboard
 ```
 
-The app uses Convex shared state, deterministic demo heuristics, and a server-side fal.ai image-generation step for reviewed drills. User-submitted content is redacted and suspicious URLs are defanged before analysis or display.
+The app uses Convex shared state, deterministic demo heuristics, and a server-side fal.ai image-editing step for reviewed drills. User-submitted content is redacted and suspicious URLs are defanged before analysis or display.
 
 Sponsor loop:
 
 ```text
-reviewed scam scenario -> fal.ai synthetic artifact -> admin approval -> playable family drill
+reviewed scam scenario -> fal.ai seed-image edit -> admin approval -> playable family drill
 ```
 
-`FAL_KEY` is optional. When it is missing, the app keeps the text-only demo path working and shows fal as not configured in admin review.
+`FAL_KEY` is optional. When it is missing, the app keeps the text-only demo path working and shows fal as not configured in admin review. The default edit seed lives at `web/public/fal-seeds/messenger-scam-template.png`.
 
 ## Local Development
 
