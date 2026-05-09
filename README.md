@@ -11,10 +11,18 @@ https://web-one-rho-kt48p1kwl2.vercel.app
 Core demo path:
 
 ```text
-/submit -> /admin -> /challenge/[id] -> /dashboard
+/submit -> /admin -> generate fal.ai drill image -> approve -> /challenge/[id] -> /dashboard
 ```
 
-The app uses Convex shared state and deterministic demo heuristics. User-submitted content is redacted and suspicious URLs are defanged before analysis or display.
+The app uses Convex shared state, deterministic demo heuristics, and a server-side fal.ai image-generation step for reviewed drills. User-submitted content is redacted and suspicious URLs are defanged before analysis or display.
+
+Sponsor loop:
+
+```text
+reviewed scam scenario -> fal.ai synthetic artifact -> admin approval -> playable family drill
+```
+
+`FAL_KEY` is optional. When it is missing, the app keeps the text-only demo path working and shows fal as not configured in admin review.
 
 ## Local Development
 
@@ -33,6 +41,7 @@ Required local env:
 ```env
 CONVEX_DEPLOYMENT=dev:fleet-curlew-675
 NEXT_PUBLIC_CONVEX_URL=https://fleet-curlew-675.convex.cloud
+FAL_KEY=optional_for_live_image_generation
 ```
 
 `npm run convex:dev` and `npm run dev` are optional editing conveniences only. If they disagree with the production build path, prioritize `npm run build` and the Vercel deployment.

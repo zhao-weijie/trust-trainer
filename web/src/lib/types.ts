@@ -21,6 +21,13 @@ export type AnswerChoice = {
   text: string;
 };
 
+export type GeneratedAsset = {
+  generated_asset_url?: string;
+  generated_asset_request_id?: string;
+  generated_asset_provider?: "fal";
+  generated_asset_prompt?: string;
+};
+
 export type TeachingLabels = {
   scam_status: ScamStatus;
   scope_status: ScopeStatus;
@@ -71,7 +78,7 @@ export type DrillDraft = DrillPrompt & {
   scam_check_id: string;
   review_status: ReviewStatus;
   draft_source: "seed" | "heuristic_demo" | "llm_prefilter" | "admin";
-};
+} & GeneratedAsset;
 
 export type ApprovedDrill = DrillPrompt & {
   id: string;
@@ -81,7 +88,7 @@ export type ApprovedDrill = DrillPrompt & {
   source_dataset: string;
   original_label: string;
   published_at: string;
-};
+} & GeneratedAsset;
 
 export type ReviewQueueItem = SubmissionArtifact &
   RedactionResult &
@@ -89,7 +96,7 @@ export type ReviewQueueItem = SubmissionArtifact &
     review_status: ReviewStatus;
     scam_check_id: string;
     draft_id: string;
-  };
+  } & GeneratedAsset;
 
 export type SeedExample = DrillPrompt & {
   id: string;
@@ -117,7 +124,7 @@ export type DatasetRow = DrillPrompt & {
   source_dataset: string;
   original_label: string;
   review_status: "admin_approved";
-};
+} & GeneratedAsset;
 
 export type DemoState = {
   submissions: ReviewQueueItem[];

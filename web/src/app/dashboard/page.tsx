@@ -43,7 +43,10 @@ export default function DashboardPage() {
             {(state?.approvedDrills ?? []).slice(0, 8).map((drill) => (
               <Link className="review-row" href={`/challenge/${drill.id}`} key={drill.id}>
                 <span className="review-row__title">{drill.scenario}</span>
-                <span className="review-row__meta">{drill.threat_type} · {drill.risk_level} · {drill.scope_status}</span>
+                <span className="review-row__meta">
+                  {drill.threat_type} · {drill.risk_level} · {drill.scope_status}
+                  {drill.generated_asset_provider ? ` · ${drill.generated_asset_provider} image` : ""}
+                </span>
               </Link>
             ))}
           </div>
@@ -63,16 +66,23 @@ export default function DashboardPage() {
 
         <Panel title="Latest dataset rows" eyebrow="Teaching labels">
           {(state?.datasetRows ?? []).slice(0, 3).map((row) => (
-            <DatasetLabels
-              className="mt-compact"
-              key={row.id}
-              scopeStatus={row.scope_status}
-              threatType={row.threat_type}
-              riskLevel={row.risk_level}
-              redFlags={row.red_flags}
-              safestAction={row.safest_action}
-              skillTags={row.skill_tags}
-            />
+            <div className="dataset-row-card" key={row.id}>
+              {row.generated_asset_url && (
+                <figure className="generated-asset generated-asset--dashboard">
+                  <img src={row.generated_asset_url} alt="fal-generated reviewed dataset artifact" />
+                  <figcaption>fal.ai reviewed artifact</figcaption>
+                </figure>
+              )}
+              <DatasetLabels
+                className="mt-compact"
+                scopeStatus={row.scope_status}
+                threatType={row.threat_type}
+                riskLevel={row.risk_level}
+                redFlags={row.red_flags}
+                safestAction={row.safest_action}
+                skillTags={row.skill_tags}
+              />
+            </div>
           ))}
         </Panel>
 

@@ -1,7 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-import { contentType, drillPrompt, reviewStatus, sourceKind, teachingLabels } from "./validators";
+import { contentType, drillPrompt, generatedAsset, reviewStatus, sourceKind, teachingLabels } from "./validators";
 
 export default defineSchema({
   submissions: defineTable({
@@ -35,6 +35,7 @@ export default defineSchema({
 
   drillDrafts: defineTable({
     ...drillPrompt,
+    ...generatedAsset,
     id: v.string(),
     submission_id: v.string(),
     scam_check_id: v.string(),
@@ -47,6 +48,7 @@ export default defineSchema({
 
   approvedDrills: defineTable({
     ...drillPrompt,
+    ...generatedAsset,
     id: v.string(),
     draft_id: v.string(),
     submission_id: v.string(),
@@ -73,6 +75,7 @@ export default defineSchema({
 
   datasetRows: defineTable({
     ...drillPrompt,
+    ...generatedAsset,
     id: v.string(),
     submission_id: v.string(),
     approved_drill_id: v.string(),
@@ -84,4 +87,3 @@ export default defineSchema({
     .index("by_domain_id", ["id"])
     .index("by_approved_drill_id", ["approved_drill_id"])
 });
-

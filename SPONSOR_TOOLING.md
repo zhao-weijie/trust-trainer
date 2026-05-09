@@ -15,6 +15,22 @@ Goal: choose sponsor tools that strengthen the judged demo without making the co
 | Provenanced real-image retrieval | Exa Search API | Retrieves source pages with URLs, titles, dates, authors, snippets, and result images for "real source vs synthetic fake" contrast drills. | Curated local source packs with saved citations. |
 | Synthetic video/image contrast | Gemini Veo 3.1 / fal.ai | Use generated video/image as safe fake examples beside Exa-provenanced real media. | fal.ai images, static mockups, pre-generated assets. |
 
+## Implemented fal.ai Demo Loop
+
+Trust Trainer now includes a server-side fal.ai image-generation step in the review workflow:
+
+```text
+reviewed scam scenario
+-> fal-ai/nano-banana-2 synthetic phone-style artifact
+-> generated image URL and fal request ID stored on the draft
+-> admin approval copies the artifact into the playable drill and reviewed dataset row
+-> family challenge displays the synthetic artifact beside the safest-action question
+```
+
+The Next.js route `POST /api/fal/generate-drill-image` calls fal from the server only, using `FAL_KEY`. The browser never receives the key. If `FAL_KEY` is absent, admin review shows a disabled fal state and the text-only demo remains usable.
+
+This is intentionally not OCR, image detection, or a real phishing-image classifier. fal.ai is used to create safe synthetic multimodal training artifacts that still require human admin approval before play.
+
 ## Optional Prize Expansions
 
 These are not on the critical path. Add only after the submit -> review -> challenge -> dashboard loop is polished.

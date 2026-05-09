@@ -58,6 +58,12 @@ export function ChallengeClient({ id }: { id: string }) {
       >
         <div className="challenge-artifact">
           <div className="artifact-preview__meta">{drill.content_type} scenario</div>
+          {drill.generated_asset_url && (
+            <figure className="generated-asset generated-asset--challenge">
+              <img src={drill.generated_asset_url} alt="fal-generated synthetic scam interaction artifact" />
+              <figcaption>fal.ai synthetic drill artifact</figcaption>
+            </figure>
+          )}
           <p className="challenge-artifact__scenario">{drill.scenario}</p>
           {attempt && (
             <div className="challenge-artifact__result">

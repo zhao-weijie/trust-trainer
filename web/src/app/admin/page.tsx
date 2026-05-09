@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
-import { Check, ExternalLink, Save, ShieldX, X } from "lucide-react";
+import { Check, ExternalLink, ImagePlus, Save, ShieldX, WandSparkles, X } from "lucide-react";
 import {
   AnalyticsPanel,
   BaseContentLayer,
@@ -79,13 +79,16 @@ export default function AdminPage() {
   const state = useQuery(api.domain.getDemoState) as DemoState | undefined;
   const seedDemo = useMutation(api.domain.seedDemo);
   const updateDraft = useMutation(api.domain.updateDraft);
+  const attachGeneratedAsset = useMutation(api.domain.attachGeneratedAsset);
   const approveDraft = useMutation(api.domain.approveDraft);
   const rejectDraft = useMutation(api.domain.rejectDraft);
   const markOutOfScope = useMutation(api.domain.markOutOfScope);
   const [selectedId, setSelectedId] = useState<string>("");
 
   const queue = useMemo(
-    () => state?.submissions.filter((item) => item.review_status === "pending_review" || item.review_status === "prefilter") ?? [],
+    () =>
+      (state?.submissions.filter((item) => item.review_status === "pending_review" || item.review_status === "prefilter") ?? [])
+        .sort((a, b) => b.submitted_at.localeCompare(a.submitted_at)),
     [state]
   );
   const selected = queue.find((item) => item.id === selectedId) ?? queue[0] ?? null;
@@ -126,6 +129,7 @@ export default function AdminPage() {
         {selected ? (
           <DraftEditor
             approveDraft={approveDraft}
+            attachGeneratedAsset={attachGeneratedAsset}
             item={selected}
             key={selected.draft_id}
             markOutOfScope={markOutOfScope}
@@ -143,12 +147,14 @@ export default function AdminPage() {
 }
 
 function DraftEditor({
+  attachGeneratedAsset,
   approveDraft,
   item,
   markOutOfScope,
   rejectDraft,
   updateDraft
 }: {
+  attachGeneratedAsset: ReturnType<typeof useMutation>;
   approveDraft: ReturnType<typeof useMutation>;
   item: ReviewQueueItem;
   markOutOfScope: ReturnType<typeof useMutation>;
@@ -159,8 +165,27 @@ function DraftEditor({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [falConfigured, setFalConfigured] = useState<boolean | null>(null);
+  const [publishedId, setPublishedId] = useState("");
   const validationErrors = validateDraft(form);
   const blocksPublish = form.scope_status === "out_of_scope_spam" || form.scope_status === "reject" || validationErrors.length > 0;
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/fal/generate-drill-image")
+      .then((response) => response.json())
+      .then((payload: { configured?: boolean }) => {
+        if (!cancelled) setFalConfigured(Boolean(payload.configured));
+      })
+      .catch(() => {
+        if (!cancelled) setFalConfigured(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function save(): Promise<boolean> {
     setError("");
@@ -206,11 +231,51 @@ function DraftEditor({
     setIsSaving(true);
     try {
       await approveDraft({ draft_id: item.draft_id });
+      setPublishedId(`approved-${item.draft_id}`);
       setNotice("Draft approved and published.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not approve this draft.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function generateFalImage() {
+    if (!falConfigured || isGeneratingImage) return;
+    setError("");
+    setNotice("");
+    setIsGeneratingImage(true);
+    try {
+      const response = await fetch("/api/fal/generate-drill-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scenario: form.scenario,
+          threat_type: form.threat_type,
+          safest_action: form.safest_action,
+          red_flags: normalizeList(form.red_flags)
+        })
+      });
+      const payload = (await response.json()) as {
+        imageUrl?: string;
+        requestId?: string;
+        prompt?: string;
+        error?: string;
+      };
+      if (!response.ok || !payload.imageUrl || !payload.requestId || !payload.prompt) {
+        throw new Error(payload.error || "fal image generation failed.");
+      }
+      await attachGeneratedAsset({
+        draft_id: item.draft_id,
+        generated_asset_url: payload.imageUrl,
+        generated_asset_request_id: payload.requestId,
+        generated_asset_prompt: payload.prompt
+      });
+      setNotice("fal image generated and attached to this draft.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not generate fal image.");
+    } finally {
+      setIsGeneratingImage(false);
     }
   }
 
@@ -223,7 +288,35 @@ function DraftEditor({
         safestAction={item.safest_action}
       >
         <p className="artifact-inline">{item.defanged_text}</p>
+        {item.generated_asset_url && (
+          <figure className="generated-asset">
+            <img src={item.generated_asset_url} alt="fal-generated synthetic scam interaction artifact" />
+            <figcaption>
+              fal.ai synthetic drill image
+              {item.generated_asset_request_id ? ` · ${item.generated_asset_request_id}` : ""}
+            </figcaption>
+          </figure>
+        )}
       </ResultPanel>
+
+      <Panel title="fal.ai image artifact" eyebrow="Sponsor media step">
+        <p className="muted">Generate one safe synthetic phone-style artifact for this drill. It remains unplayable until admin approval.</p>
+        <div className="action-row">
+          <Button
+            disabled={!falConfigured || isGeneratingImage || blocksPublish}
+            onClick={() => void generateFalImage()}
+            variant="secondary"
+          >
+            {isGeneratingImage ? <WandSparkles size={15} /> : <ImagePlus size={15} />}
+            {falConfigured === false ? "fal not configured" : isGeneratingImage ? "Generating..." : "Generate fal image"}
+          </Button>
+          {item.generated_asset_url && (
+            <a className="button button--ghost button--md" href={item.generated_asset_url} rel="noreferrer" target="_blank">
+              Open image <ExternalLink size={15} />
+            </a>
+          )}
+        </div>
+      </Panel>
 
       <Panel title="Teaching labels" eyebrow="Admin editable">
         <div className="editor-grid">
@@ -327,6 +420,11 @@ function DraftEditor({
         <Link className="button button--ghost button--md" href="/dashboard">
           Dashboard <ExternalLink size={15} />
         </Link>
+        {publishedId && (
+          <Link className="button button--primary button--md" href={`/challenge/${publishedId}`}>
+            Play published drill <ExternalLink size={15} />
+          </Link>
+        )}
       </div>
       {error && <p className="form-error">{error}</p>}
       {notice && <p className="form-notice">{notice}</p>}

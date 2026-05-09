@@ -38,6 +38,25 @@ function slugify(value: string): string {
   return slug || "submission";
 }
 
+function generatedAssetFields(doc: {
+  generated_asset_url?: string;
+  generated_asset_request_id?: string;
+  generated_asset_provider?: "fal";
+  generated_asset_prompt?: string;
+}) {
+  const fields: {
+    generated_asset_url?: string;
+    generated_asset_request_id?: string;
+    generated_asset_provider?: "fal";
+    generated_asset_prompt?: string;
+  } = {};
+  if (doc.generated_asset_url) fields.generated_asset_url = doc.generated_asset_url;
+  if (doc.generated_asset_request_id) fields.generated_asset_request_id = doc.generated_asset_request_id;
+  if (doc.generated_asset_provider) fields.generated_asset_provider = doc.generated_asset_provider;
+  if (doc.generated_asset_prompt) fields.generated_asset_prompt = doc.generated_asset_prompt;
+  return fields;
+}
+
 function heuristicLabels(rawText: string): TeachingLabels {
   const labels = heuristicCheck(rawText);
   if (labels.scope_status === "in_scope_phishing_or_scam" && labels.scam_status === "verified_scam") {
@@ -104,6 +123,7 @@ function queueItem(submission: Doc<"submissions">, draft: Doc<"drillDrafts">): R
     answer_choices: draft.answer_choices,
     correct_answer: draft.correct_answer,
     explanation: draft.explanation,
+    ...generatedAssetFields(draft),
     review_status: draft.review_status,
     scam_check_id: draft.scam_check_id,
     draft_id: draft.id
@@ -130,7 +150,8 @@ function approvedDrill(doc: Doc<"approvedDrills">): ApprovedDrill {
     skill_tags: doc.skill_tags,
     answer_choices: doc.answer_choices,
     correct_answer: doc.correct_answer,
-    explanation: doc.explanation
+    explanation: doc.explanation,
+    ...generatedAssetFields(doc)
   };
 }
 
@@ -165,7 +186,8 @@ function datasetRow(doc: Doc<"datasetRows">): DatasetRow {
     skill_tags: doc.skill_tags,
     answer_choices: doc.answer_choices,
     correct_answer: doc.correct_answer,
-    explanation: doc.explanation
+    explanation: doc.explanation,
+    ...generatedAssetFields(doc)
   };
 }
 
@@ -223,7 +245,8 @@ async function approveDraftDoc(
     skill_tags: draft.skill_tags,
     answer_choices: draft.answer_choices,
     correct_answer: draft.correct_answer,
-    explanation: draft.explanation
+    explanation: draft.explanation,
+    ...generatedAssetFields(draft)
   };
 
   if (existing) {
@@ -256,7 +279,8 @@ async function approveDraftDoc(
     skill_tags: draft.skill_tags,
     answer_choices: draft.answer_choices,
     correct_answer: draft.correct_answer,
-    explanation: draft.explanation
+    explanation: draft.explanation,
+    ...generatedAssetFields(draft)
   };
 
   if (existingRow) {
@@ -478,7 +502,11 @@ export const updateDraft = mutation({
     skill_tags: v.optional(v.array(v.string())),
     answer_choices: v.optional(v.array(answerChoice)),
     correct_answer: v.optional(answerChoiceId),
-    explanation: v.optional(v.string())
+    explanation: v.optional(v.string()),
+    generated_asset_url: v.optional(v.string()),
+    generated_asset_request_id: v.optional(v.string()),
+    generated_asset_provider: v.optional(v.literal("fal")),
+    generated_asset_prompt: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     const draft = await getDraftByDomainId(ctx, args.draft_id);
@@ -500,10 +528,37 @@ export const updateDraft = mutation({
     if (args.answer_choices !== undefined) patch.answer_choices = args.answer_choices;
     if (args.correct_answer !== undefined) patch.correct_answer = args.correct_answer;
     if (args.explanation !== undefined) patch.explanation = args.explanation;
+    if (args.generated_asset_url !== undefined) patch.generated_asset_url = args.generated_asset_url;
+    if (args.generated_asset_request_id !== undefined) patch.generated_asset_request_id = args.generated_asset_request_id;
+    if (args.generated_asset_provider !== undefined) patch.generated_asset_provider = args.generated_asset_provider;
+    if (args.generated_asset_prompt !== undefined) patch.generated_asset_prompt = args.generated_asset_prompt;
     await ctx.db.patch(draft._id, patch);
 
     const updated = await ctx.db.get(draft._id);
     return updated;
+  }
+});
+
+export const attachGeneratedAsset = mutation({
+  args: {
+    draft_id: v.string(),
+    generated_asset_url: v.string(),
+    generated_asset_request_id: v.string(),
+    generated_asset_prompt: v.string()
+  },
+  handler: async (ctx, args) => {
+    const draft = await getDraftByDomainId(ctx, args.draft_id);
+    if (!draft) {
+      throw new Error(`Draft not found: ${args.draft_id}`);
+    }
+    await ctx.db.patch(draft._id, {
+      generated_asset_url: args.generated_asset_url,
+      generated_asset_request_id: args.generated_asset_request_id,
+      generated_asset_provider: "fal",
+      generated_asset_prompt: args.generated_asset_prompt,
+      draft_source: "admin"
+    });
+    return { ok: true };
   }
 });
 

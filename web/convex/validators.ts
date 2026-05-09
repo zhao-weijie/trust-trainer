@@ -61,3 +61,9 @@ export const drillPrompt = {
   explanation: v.string()
 };
 
+export const generatedAsset = {
+  generated_asset_url: v.optional(v.string()),
+  generated_asset_request_id: v.optional(v.string()),
+  generated_asset_provider: v.optional(v.literal("fal")),
+  generated_asset_prompt: v.optional(v.string())
+};
