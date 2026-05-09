@@ -66,6 +66,9 @@
   - Contains 235,795 URL/webpage instances: 134,850 legitimate and 100,945 phishing URLs.
   - Labels are explicit: `1 = legitimate`, `0 = phishing`.
   - Includes URL and webpage-derived features, useful for explaining why a link looks risky.
+  - Best use is paired legitimate-vs-phishing contrast drills, not dumping raw URLs into the quiz pool.
+  - Cluster phishing rows near legitimate rows by domain/title/token similarity, then use Exa to verify the legitimate company, official site, and normal user action.
+  - Use AI models to turn verified pairs into safe synthetic SMS/email/chat scenarios for ingestion into the human review flow.
   - License: CC BY 4.0.
 - Priority 3: Curated synthetic smishing/WhatsApp seed set
   - Use OpenAI plus human review to create 8-12 modern SMS/WhatsApp-style phishing scenarios: delivery fee scams, bank alerts, fake government notices, toll scams, account verification, job scams, and payment requests.
@@ -102,7 +105,19 @@ raw public dataset row or user-submitted suspicious message
 -> anonymized structured row for the missing smishing/consumer-scam dataset
 ```
 
-Adaption sponsor thesis: SecondLook is not just cleaning existing datasets. It bootstraps from public phishing email and URL corpora, then helps create the missing reviewed SMS/WhatsApp scam literacy dataset from real user submissions.
+PhiUSIIL paired-contrast adaptation:
+
+```text
+legitimate URL row + nearby phishing URL row
+-> lexical/domain/title similarity candidate pair
+-> Exa verification of the legitimate entity and official source
+-> synthetic family-facing suspicious message or email wrapper
+-> defanged links and teaching labels
+-> human admin review
+-> approved legitimate-vs-phishing drill
+```
+
+Adaption sponsor thesis: SecondLook is not just cleaning existing datasets. It adapts raw public phishing URL rows into paired, Exa-grounded, human-reviewed teaching examples, then helps create the missing reviewed SMS/WhatsApp scam literacy dataset from real user submissions.
 
 Required normalized labels:
 

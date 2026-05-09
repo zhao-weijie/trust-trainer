@@ -403,6 +403,57 @@ review_notes
 
 The admin UI should show an "Adaption dataset run" panel beside the dataset export view. That is the visible sponsor loop: messy seed data becomes normalized, evaluated, reviewable teaching rows.
 
+### PhiUSIIL Pair Generation
+
+Use PhiUSIIL to create legitimate-vs-phishing contrast pairs. The pair is a candidate teaching artifact, not proof by itself.
+
+```text
+PhiUSIIL CSV
+-> split `label = 1` legitimate rows and `label = 0` phishing rows
+-> compute lexical similarity over domain, URL tokens, and page title
+-> add explainability signals from URL/page features
+-> select high-contrast candidate pairs
+-> verify the legitimate side with Exa
+-> generate safe synthetic SMS/email/chat scenarios
+-> defang every suspicious URL
+-> submit to admin review as pending drills
+```
+
+Pairing signals:
+
+```text
+domain token overlap
+title token overlap
+brand/entity token similarity
+suspicious TLD or free-hosting domain
+URL length and subdomain count
+HasObfuscation
+NoOfURLRedirect
+HasExternalFormSubmit
+HasPasswordField
+Bank, Pay, Crypto
+```
+
+Exa role:
+
+```text
+input: likely legitimate brand, domain, or page title
+output: official website, short entity description, trusted support/security URL if available, provenance metadata
+```
+
+Do not browse live phishing pages with Exa. Exa verifies the legitimate side and provides normal-company context; the suspicious side stays defanged and feature-derived.
+
+Generated drill shapes:
+
+```text
+lookalike_domain_pair
+hosted_impersonation_pair
+brand_action_mismatch_pair
+benign_contrast_pair
+```
+
+AI generation should create safe wrappers around the pair, for example a forwarded SMS, email, or chat message that references the defanged suspicious URL. It must not create clickable malicious links, credential collection flows, or instructions for running a phishing page.
+
 ### Demo-Safe Contract
 
 Send Adaption only redacted/defanged rows during the hackathon demo. Treat Adaption as batch/offline:
