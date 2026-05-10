@@ -1,158 +1,280 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
 import { useMutation } from "convex/react";
-import { ClipboardCheck, Shield, ShieldCheck } from "lucide-react";
-import { AnalyticsPanel, BaseContentLayer, Button, Panel, ResultPanel, StatusBadge } from "@/components";
-import { api } from "@/lib/convexApi";
-import { sanitizeSubmission } from "@/lib/safety";
-import { openingExample, seedExamples } from "@/lib/seeds";
-import type { ContentType, Submission } from "@/lib/types";
+import { Camera, Check, RotateCcw, ShieldCheck, Upload } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-function toneForStatus(status: string) {
-  if (status === "legitimate" || status === "benign_contrast") return "success" as const;
-  if (status === "verified_scam" || status === "high") return "danger" as const;
-  if (status === "suspected_scam" || status === "medium") return "warning" as const;
-  return "draft" as const;
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { convexApi } from "@/lib/apiRefs";
+import { classifySubmission, type SubmissionResult } from "@/lib/drill";
+import {
+  bakeRedactions,
+  boxAtPoint,
+  drawRedactionPreview,
+  loadImage,
+  piiReason,
+  redactTextFromBoxes,
+  type OcrBox
+} from "@/lib/redaction";
+
+type Phase = "upload" | "review" | "baked" | "submitted";
+
+type SubmissionResponse = {
+  submission_id: string;
+  draft_id: string;
+  result: SubmissionResult;
+};
+
+function resultLabel(result: SubmissionResult) {
+  if (result === "confirmed_scam") return "confirmed scam";
+  if (result === "suspected_scam") return "suspected scam";
+  return "legitimate";
+}
+
+function resultTone(result: SubmissionResult) {
+  if (result === "confirmed_scam") return "destructive" as const;
+  if (result === "suspected_scam") return "secondary" as const;
+  return "outline" as const;
 }
 
 export default function SubmitPage() {
-  const [rawText, setRawText] = useState("");
-  const [contentType, setContentType] = useState<ContentType>("sms");
-  const [result, setResult] = useState<Submission | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitScreenshot = useMutation(convexApi.app.submitScreenshot);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [phase, setPhase] = useState<Phase>("upload");
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [ocrText, setOcrText] = useState("");
+  const [boxes, setBoxes] = useState<OcrBox[]>([]);
+  const [activeBoxId, setActiveBoxId] = useState("");
+  const [bakedImage, setBakedImage] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const submitContent = useMutation(api.domain.submitContent);
-  const sanitized = useMemo(() => sanitizeSubmission(rawText), [rawText]);
-  const canSubmit = rawText.trim().length > 0 && sanitized.defanged_text.trim().length > 0;
-  const hasInput = rawText.trim().length > 0;
+  const [submission, setSubmission] = useState<SubmissionResponse | null>(null);
+  const redactedText = useMemo(() => redactTextFromBoxes(ocrText, boxes), [ocrText, boxes]);
+  const result = useMemo(() => classifySubmission(redactedText), [redactedText]);
+  const redactedCount = boxes.filter((box) => box.redacted).length;
 
-  async function submit() {
-    if (!canSubmit) return;
-    setIsSubmitting(true);
+  useEffect(() => {
+    if (!image || !canvasRef.current) return;
+    drawRedactionPreview(canvasRef.current, image, boxes, activeBoxId);
+  }, [activeBoxId, boxes, image]);
+
+  async function handleFile(file: File) {
+    setBusy(true);
     setError("");
+    setProgress(12);
+    setSubmission(null);
+    setBakedImage("");
     try {
-      const response = (await submitContent({ raw_text: rawText, content_type: contentType })) as {
-        submission: Submission;
-      };
-      setResult(response.submission);
+      const nextImage = await loadImage(file);
+      setImage(nextImage);
+      setProgress(28);
+      const tesseract = await import("tesseract.js");
+      const response = await tesseract.recognize(file, "eng", {
+        logger: (message) => {
+          if (message.status === "recognizing text") setProgress(30 + Math.round(message.progress * 55));
+        }
+      });
+      const text = response.data.text.trim();
+      const words = ((response.data as unknown as { words?: Array<{ text?: string; bbox?: { x0: number; y0: number; x1: number; y1: number } }> }).words ?? [])
+        .map((word, index): OcrBox | null => {
+          const wordText = (word.text ?? "").trim();
+          const reason = piiReason(wordText);
+          if (!wordText || !word.bbox || !reason) return null;
+          return {
+            id: `box-${index}`,
+            text: wordText,
+            x: word.bbox.x0,
+            y: word.bbox.y0,
+            width: Math.max(4, word.bbox.x1 - word.bbox.x0),
+            height: Math.max(4, word.bbox.y1 - word.bbox.y0),
+            redacted: true,
+            reason
+          };
+        })
+        .filter(Boolean) as OcrBox[];
+      setOcrText(text);
+      setBoxes(words);
+      setPhase("review");
+      setProgress(100);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Analysis failed. Try again with text content.");
+      setError(caught instanceof Error ? caught.message : "Could not read text from that screenshot.");
+      setPhase("upload");
     } finally {
-      setIsSubmitting(false);
+      setBusy(false);
     }
   }
 
+  function toggleBox(id: string) {
+    setActiveBoxId(id);
+    setBoxes((current) => current.map((box) => (box.id === id ? { ...box, redacted: !box.redacted } : box)));
+  }
+
+  function bake() {
+    if (!image) return;
+    setBakedImage(bakeRedactions(image, boxes));
+    setPhase("baked");
+  }
+
+  async function submit() {
+    if (!bakedImage) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = (await submitScreenshot({
+        baked_image_data_url: bakedImage,
+        ocr_text: ocrText,
+        redacted_text: redactedText,
+        defanged_text: redactedText,
+        result,
+        redaction_boxes: boxes.map((box) => ({
+          text: box.text,
+          reason: box.reason,
+          redacted: box.redacted
+        }))
+      })) as SubmissionResponse;
+      setSubmission(response);
+      setPhase("submitted");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Submission failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function reset() {
+    setPhase("upload");
+    setImage(null);
+    setOcrText("");
+    setBoxes([]);
+    setActiveBoxId("");
+    setBakedImage("");
+    setProgress(0);
+    setError("");
+    setSubmission(null);
+  }
+
   return (
-    <div className="workflow-shell">
-      <BaseContentLayer
-        title={hasInput ? "Safety check preview" : "Start your safety check"}
-        kicker={hasInput ? "Redacted artifact" : "Scam Check"}
-        meta={
-          <>
-            <StatusBadge tone="info">{contentType}</StatusBadge>
-            <StatusBadge tone={hasInput ? "success" : "draft"}>{hasInput ? "PII masked" : "Text first"}</StatusBadge>
-          </>
-        }
-        footer={hasInput ? "PII is masked and suspicious URLs are defanged before display." : undefined}
-      >
-        {hasInput ? (
-          <div className="artifact-preview artifact-preview--phone">
-            <div className="artifact-preview__meta">Safe artifact preview</div>
-            <p>{sanitized.defanged_text}</p>
-          </div>
-        ) : (
-          <div className="intake-empty">
-            <div className="intake-empty__icon" aria-hidden="true">
-              <Shield size={72} strokeWidth={1.7} />
-            </div>
-            <h2>Start Your Safety Check</h2>
-            <p>Paste a suspicious message and turn it into a quick safety check.</p>
-          </div>
-        )}
-      </BaseContentLayer>
+    <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-5 px-4 py-6 sm:py-10">
+      <header className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm text-muted-foreground">Trust Trainer</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Screenshot safety intake</h1>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/drill">Drill</Link>
+        </Button>
+      </header>
 
-      <AnalyticsPanel title={hasInput ? "Ready to check" : "Check a message"} kicker="Step 01">
-        <Panel title="Paste or seed content" eyebrow="Input">
-          <label className="field">
-            Source type
-            <select value={contentType} onChange={(event) => setContentType(event.target.value as ContentType)}>
-              <option value="sms">SMS</option>
-              <option value="whatsapp">WhatsApp</option>
-              <option value="email">Email</option>
-              <option value="url">URL</option>
-              <option value="social_post">Social post</option>
-            </select>
-          </label>
-          <label className="field">
-            Suspicious content
-            <textarea
-              id="suspicious-content"
-              placeholder={openingExample.raw_text}
-              value={rawText}
-              onChange={(event) => {
-                setRawText(event.target.value);
-                setResult(null);
-                setError("");
-              }}
-            />
-          </label>
-          <div className="sample-grid">
-            {seedExamples.slice(0, 4).map((example) => (
-              <button
-                className="sample-chip"
-                key={example.id}
-                onClick={() => {
-                  setRawText(example.raw_text);
-                  setContentType(example.content_type);
-                  setResult(null);
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>
+              {phase === "upload" && "Upload one screenshot"}
+              {phase === "review" && "Review redactions"}
+              {phase === "baked" && "Send baked artifact"}
+              {phase === "submitted" && "Submitted"}
+            </CardTitle>
+            <Badge variant={phase === "submitted" && submission ? resultTone(submission.result) : "secondary"}>
+              {phase === "submitted" && submission ? resultLabel(submission.result) : phase}
+            </Badge>
+          </div>
+          <CardDescription>
+            {phase === "upload" && "Use the screenshot path only. Raw text paste is intentionally gone."}
+            {phase === "review" && "Tap a redaction box only if it should remain visible, such as a scammer sender address."}
+            {phase === "baked" && "The image below is the irreversible redacted version that will be submitted."}
+            {phase === "submitted" && "The case is queued for human review. Submit another if you have one."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {phase === "upload" && (
+            <div className="space-y-4">
+              <Label htmlFor="screenshot">Suspicious screenshot</Label>
+              <Input
+                accept="image/*"
+                capture="environment"
+                disabled={busy}
+                id="screenshot"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleFile(file);
                 }}
-                type="button"
-              >
-                {example.threat_type}
-              </button>
-            ))}
-          </div>
+                type="file"
+              />
+              {busy && <Progress value={progress} />}
+              <Button className="w-full" disabled>
+                <Upload className="h-4 w-4" /> Choose screenshot above
+              </Button>
+            </div>
+          )}
 
-          <div className="status-stack">
-            <StatusBadge tone={hasInput ? "success" : "draft"}>PII masked locally</StatusBadge>
-            <StatusBadge tone={hasInput ? "success" : "draft"}>URLs defanged before display</StatusBadge>
-          </div>
-          {error && <p className="form-error">{error}</p>}
-          <Button disabled={!canSubmit || isSubmitting} onClick={() => void submit()}>
-            {isSubmitting ? "Submitting..." : "Submit for analysis"} <ShieldCheck size={15} />
-          </Button>
-        </Panel>
-
-        {result ? (
-          <ResultPanel
-            title="Safety result"
-            statusLabel={result.scam_status}
-            statusTone={toneForStatus(result.scam_status)}
-            description={
-              result.scope_status === "out_of_scope_spam"
-                ? "This is advertising or generic spam, not phishing training material."
-                : "Use this safety check to spot the risk, then practice the same habit in a reviewed drill."
-            }
-            redFlags={result.red_flags}
-            safestAction={result.safest_action}
-            meta={
-              <div className="status-stack">
-                <StatusBadge tone={toneForStatus(result.scope_status)}>{result.scope_status}</StatusBadge>
-                <StatusBadge tone={toneForStatus(result.risk_level)}>{result.risk_level}</StatusBadge>
+          {phase === "review" && (
+            <div className="space-y-4">
+              <canvas
+                className="w-full rounded-lg border bg-muted"
+                onClick={(event) => {
+                  if (!canvasRef.current || !image) return;
+                  const box = boxAtPoint(canvasRef.current, image, boxes, event.clientX, event.clientY);
+                  if (box) toggleBox(box.id);
+                }}
+                ref={canvasRef}
+              />
+              <div className="rounded-lg border p-3 text-sm">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="font-medium">OCR text after redaction</span>
+                  <Badge variant="outline">{redactedCount} boxes hidden</Badge>
+                </div>
+                <p className="whitespace-pre-wrap text-muted-foreground">{redactedText || "No text detected."}</p>
               </div>
-            }
-          >
-            {result.skeptical_claims.length > 0 && (
-              <p className="muted">Caution notes: {result.skeptical_claims.join(" ")}</p>
-            )}
-            <Link className="button button--primary button--md" href="/admin">
-              Open human review <ClipboardCheck size={15} />
-            </Link>
-          </ResultPanel>
-        ) : null}
-      </AnalyticsPanel>
-    </div>
+              <Button className="w-full" disabled={!image || busy} onClick={bake}>
+                <ShieldCheck className="h-4 w-4" /> Bake redactions
+              </Button>
+            </div>
+          )}
+
+          {phase === "baked" && (
+            <div className="space-y-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img alt="Baked redacted submission" className="w-full rounded-lg border bg-muted" src={bakedImage} />
+              <Alert>
+                <Camera className="h-4 w-4" />
+                <AlertTitle>Raw screenshot stays local</AlertTitle>
+                <AlertDescription>Only this baked image and redacted OCR text are submitted.</AlertDescription>
+              </Alert>
+              <Button className="w-full" disabled={busy} onClick={() => void submit()}>
+                <Check className="h-4 w-4" /> Send for review
+              </Button>
+            </div>
+          )}
+
+          {phase === "submitted" && submission && (
+            <div className="space-y-4">
+              <Alert>
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>{resultLabel(submission.result)}</AlertTitle>
+                <AlertDescription>Submission `{submission.submission_id}` is queued for human review.</AlertDescription>
+              </Alert>
+              <Button className="w-full" onClick={reset}>
+                <RotateCcw className="h-4 w-4" /> Submit another
+              </Button>
+            </div>
+          )}
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertTitle>Blocked</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+    </main>
   );
 }

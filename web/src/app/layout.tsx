@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { AppShell } from "@/components/AppShell";
-import { ConvexClientProvider } from "@/components/ConvexClientProvider";
-import "./style.css";
+
+import { ConvexClientProvider } from "@/lib/convex";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Trust Trainer",
-  description: "Human-reviewed safety drills for suspicious digital content."
+  description: "Screenshot-only scam intake and reviewed family safety drills."
 };
 
-export default function RootLayout({
-  children
-}: Readonly<{
-  children: ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
       <body>
-        <ConvexClientProvider>
-          <AppShell>{children}</AppShell>
-        </ConvexClientProvider>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
   );
